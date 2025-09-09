@@ -1,5 +1,7 @@
 # Sistema de Inventario de una Tienda de Juegos/Videojuegos
 
+![CI](https://github.com/egp1020/SistemaInventarioTiendaJuegos/actions/workflows/ci.yml/badge.svg)
+
 ## 🔀 Flujo de ramas
 
 - **`main`**
