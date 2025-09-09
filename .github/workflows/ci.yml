@@ -2,7 +2,9 @@ name: CI - Build & Check
 
 on:
   push:
+
     branches: [ "**" ]     # corre en cualquier push
+
   pull_request:
     branches: [ "develop", "main" ]  # CI obligatorio en PR a develop/main
 
@@ -10,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Python
