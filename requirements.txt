@@ -1,2 +1,6 @@
 streamlit
 pytest
+pathlib
+dataclasses
+uuid
+datetime

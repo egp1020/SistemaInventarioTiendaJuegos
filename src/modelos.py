@@ -14,30 +14,35 @@ class Videojuego:
     portada: str = ""
     fecha_publicacion: str = ""
     def __post_init__(self):
-        # Validar formato de fecha
+        # Validar formatos
         try:
             datetime.strptime(self.fecha_publicacion, "%Y-%m-%d")
         except ValueError:
             raise ValueError("La fecha debe tener el formato YYYY-MM-DD")
+        if isinstance(self.cantidad, float):
+            raise ValueError("La cantidad no puede ser decimal")
+        if not isinstance(self.cantidad, int):
+            raise ValueError("La cantidad debe ser un numero")
+        if not isinstance(self.precio, (int, float)):
+            raise ValueError("El precio debe ser un número") 
+        #validar que los campos esten llenos
         if not self.nombre:
             raise ValueError("El nombre es obligatorio")
         if self.precio is None:
             raise ValueError("El precio no puede estar vacio")
-        if self.precio <= 0:
-            raise ValueError("El precio no puede ser negativo")
         if self.cantidad is None:
             raise ValueError("La cantidad no puede estar vacia")
-        if self.cantidad < 0:
-            raise ValueError("La cantidad no puede ser negativa")
-        if self.cantidad is float:
-            raise ValueError("La cantidad no puede ser decimal")
         if not self.compania:
             raise ValueError("La compañía es obligatoria")
         if not self.portada:
             raise ValueError("La portada es obligatoria")    
         if self.fecha_publicacion is None:
             raise ValueError("La fecha es obligatoria")
-    
+        #verificar errores logicos
+        if self.precio <= 0:
+            raise ValueError("El precio no puede ser negativo")
+        if self.cantidad < 0:
+            raise ValueError("La cantidad no puede ser negativa")
 
     def to_dict(self):
         return asdict(self)
