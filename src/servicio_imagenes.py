@@ -1,33 +1,36 @@
 import os
-import uuid
 from pathlib import Path
+import hashlib
+
 class servicio_imagenes:
-    def __init__(self):
-        self.ruta_base = Path(__file__).parent.parent
-        self.carpeta_portadas = self.ruta_base / "imagenes" / "portadas"
-        
-        # Crear carpetas si no existen
+    def __init__(self, carpeta_base="imagenes/portadas"):
+        self.carpeta_portadas = Path(carpeta_base)
         self.carpeta_portadas.mkdir(parents=True, exist_ok=True)
+
     def guardar_imagen(self, archivo_imagen, nombre_original):
-        try:
-            # Generar nombre único
-            extension = os.path.splitext(nombre_original)[1].lower()
-            nombre_unico = f"{uuid.uuid4().hex}{extension}"
-            
-            # Ruta completa donde se guardará
-            ruta_guardado = self.carpeta_portadas / nombre_unico
-            
-            # Guardar la imagen
+        """
+        Guarda una imagen en disco usando SHA256 como nombre único.
+        Si la imagen ya existe (mismo contenido), no la duplica.
+        Retorna la ruta relativa que se debe guardar en el JSON.
+        """
+
+        # Leer contenido en bytes
+        contenido = archivo_imagen.getvalue() if hasattr(archivo_imagen, 'getvalue') else archivo_imagen.read()
+
+        # Calcular hash SHA256
+        hash_archivo = hashlib.sha256(contenido).hexdigest()
+
+        # Mantener extensión original
+        extension = os.path.splitext(nombre_original)[1].lower()
+        nombre_unico = f"{hash_archivo}{extension}"
+
+        ruta_guardado = self.carpeta_portadas / nombre_unico
+
+        # Guardar solo si no existe ya
+        if not ruta_guardado.exists():
             with open(ruta_guardado, "wb") as f:
-                if hasattr(archivo_imagen, 'getvalue'):
-                    f.write(archivo_imagen.getvalue())
-                else:
-                    f.write(archivo_imagen.read())
-            
-            # Devolver ruta relativa
-            return f"imagenes/portadas/{nombre_unico}"
-            
-        except Exception as e:
-            raise Exception(f"Error al guardar imagen: {str(e)}")
-    
- 
+                f.write(contenido)
+
+
+        # Retornar ruta relativa para guardar en JSON
+        return f"imagenes/portadas/{nombre_unico}"

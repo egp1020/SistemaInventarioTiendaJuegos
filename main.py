@@ -1,286 +1,152 @@
-import sys
-import os
+import base64
 from pathlib import Path
+import streamlit as st
+from datetime import date, datetime
+from src.modelos import Videojuego
+from src import repositorio
+from src.servicio_imagenes import servicio_imagenes
+from src import servicio 
 
-# Configurar path para importar desde src
-sys.path.append(str(Path(__file__).parent / "src"))
+servicio_img = servicio_imagenes()
 
-from modelos import Videojuego
-from servicio import agregar_videojuego, buscar_por_Id, listar_juegos
-from repositorio import obtener_inventario, guardar_inventario, inicializar_inventario
+st.title("🎮 Registro de Videojuegos")
+st.subheader("Formulario para agregar un nuevo videojuego")
 
-# Clase para simular archivos subidos en Streamlit
-class MockArchivo:
-    def __init__(self, nombre_archivo="test.png"):
-        self.name = nombre_archivo
-        self._content = b"fake_image_data_" + nombre_archivo.encode()
-    
-    def getvalue(self):
-        return self._content
-    
-    def read(self):
-        return self._content
+# Inicializar valores por defecto en session_state (si no existen)
+defaults = {
+    "nombre": "",
+    "precio": 0.0,
+    "cantidad": 0,
+    "compania": "",
+    "fecha": None
+}
+for k, v in defaults.items():
+    if k not in st.session_state:
+        st.session_state[k] = v
 
-def limpiar_inventario():
-    """Limpia el inventario para pruebas"""
-    guardar_inventario([])
-    print("🧹 Inventario limpiado")
+if "portada_key" not in st.session_state:
+    st.session_state["portada_key"] = 0
 
-def prueba_validaciones_modelo():
-    """Prueba las validaciones del modelo Videojuego"""
-    print("=" * 60)
-    print("🧪 PRUEBAS DE VALIDACIÓN DEL MODELO")
-    print("=" * 60)
-    
-    # Test 1: Portada vacía (DEBE FALLAR según tu código)
-    print("\n1. Probando portada vacía (debe fallar)...")
-    try:
-        juego = Videojuego(
-            nombre="Zelda Test",
-            precio=59.99,
-            cantidad=10,
-            compania="Nintendo",
-            portada="",  # PORTADA VACÍA - DEBE FALLAR
-            fecha_publicacion="2023-05-12"
+# Formulario
+with st.form("formulario_juego", clear_on_submit=False):
+    nombre = st.text_input("Nombre del videojuego", key="nombre")
+    precio = st.number_input("Precio", step=0.01, key="precio")
+    cantidad = st.number_input("Stock", step=1, min_value=0, key="cantidad")
+    compania = st.text_input("Compañía", key="compania")
+    if st.session_state["fecha"] is None:
+        fecha_str = st.text_input("Fecha de publicación (YYYY-MM-DD)", value="")
+        fecha_val = None
+        if fecha_str:
+            try:
+                fecha_val = date.fromisoformat(fecha_str)
+                st.session_state["fecha"] = fecha_val
+            except ValueError:
+                st.warning("⚠️ Ingrese una fecha válida con formato YYYY-MM-DD")
+    else:
+        fecha_val = st.date_input(
+            "Fecha de publicación (YYYY-MM-DD)",
+            value=st.session_state["fecha"],
+            min_value=date(1900, 1, 1),
+            max_value=date(2030, 12, 31),
+            format="YYYY-MM-DD",
+            key="fecha"
         )
-        print("   ❌ ERROR: Debió fallar por portada vacía")
-        return False
-    except ValueError as e:
-        if "portada" in str(e).lower() or "obligatoria" in str(e).lower():
-            print(f"   ✅ CORRECTO: {e}")
-            return True
-        else:
-            print(f"   ❌ ERROR inesperado: {e}")
-            return False
     
-    # Test 2: Datos válidos (DEBE FUNCIONAR)
-    print("\n2. Probando datos válidos...")
+    # ✅ File uploader SIN valor por defecto
+    # ✅ File uploader con key dinámico
+    portada = st.file_uploader(
+        "Portada",
+        type=["png", "jpg", "jpeg"],
+        key=f"portada_{st.session_state['portada_key']}")
+
+    submit = st.form_submit_button("💾 Guardar")
+
+if submit:
+    nombre_val = nombre.strip()
+    precio_val = precio
+    cantidad_val = cantidad
+    compania_val = compania.strip()
+    portada_val = portada
+    fecha_final = fecha_val
+    
     try:
-        juego = Videojuego(
-            nombre="The Legend of Zelda",
-            precio=59.99,
-            cantidad=15,
-            compania="Nintendo",
-            portada="imagenes/portadas/zelda.png",  # Ruta válida
-            fecha_publicacion="2017-03-03"
+        if cantidad_val <= 0:
+            raise ValueError("El stock es obligatorio y debe ser mayor que 0")
+        if fecha_final is None:
+            raise ValueError("La fecha es obligatoria")
+        resultado = servicio.agregar_videojuego(
+        nombre_val,
+        precio_val,
+        cantidad_val,
+        compania_val,
+        portada_val,
+        fecha_val.strftime("%Y-%m-%d")
         )
-        print(f"   ✅ CORRECTO: Juego creado - ID: {juego.id}")
-        print(f"   📝 Nombre: {juego.nombre}")
-        return True
-    except ValueError as e:
-        print(f"   ❌ ERROR inesperado: {e}")
-        return False
 
-def prueba_servicio_agregar():
-    """Prueba el servicio de agregar videojuegos"""
-    print("\n" + "=" * 60)
-    print("🧪 PRUEBAS DEL SERVICIO - AGREGAR JUEGOS")
-    print("=" * 60)
-    
-    limpiar_inventario()
-    
-    # Test 1: Agregar sin portada (DEBE FALLAR)
-    print("\n1. Agregar juego sin portada...")
-    resultado = agregar_videojuego(
-        nombre="Mario Sin Imagen",
-        precio=49.99,
-        cantidad=8,
-        compania="Nintendo",
-        portada=None,  # ✅ CORREGIDO: parámetro 'portada'
-        fecha_publicacion="2023-05-15"
-    )
-    
-    if not resultado["ok"]:
-        print(f"   ✅ CORRECTO: {resultado['error']}")
-    else:
-        print("   ❌ ERROR: Debió fallar por falta de portada")
-        return False, None
-    
-    # Test 2: Agregar con portada (DEBE FUNCIONAR)
-    print("\n2. Agregar juego con portada...")
-    archivo_prueba = MockArchivo("super_mario_odyssey.png")
-    
-    resultado = agregar_videojuego(
-        nombre="Super Mario Odyssey",
-        precio=59.99,
-        cantidad=12,
-        compania="Nintendo",
-        portada=archivo_prueba,  # ✅ CORREGIDO: parámetro 'portada'
-        fecha_publicacion="2017-10-27"
-    )
-    
-    if resultado["ok"]:
-        print(f"   ✅ CORRECTO: {resultado.get('mensaje ', 'Juego agregado')}")
-        mario_id = resultado["id"]
-        print(f"   🆔 ID generado: {mario_id}")
-        
-        # Verificar que se guardó en el inventario
-        inventario = obtener_inventario()
-        if len(inventario) == 1:
-            print("   📦 Juego guardado en inventario correctamente")
-            
-            # Verificar que se guardó la ruta, no el objeto
-            juego_guardado = inventario[0]
-            if juego_guardado["portada"].startswith("imagenes/portadas/"):
-                print("   🖼️  Ruta de portada guardada correctamente")
-                return True, mario_id
-            else:
-                print(f"   ❌ ERROR: Ruta de portada inválida: {juego_guardado['portada']}")
-                return False, None
+        if resultado["ok"]:
+                st.success(f"✅ Videojuego agregado exitosamente. ID generado: {resultado['id']}")
+
+                # 🔑 Limpiar solo si el registro fue exitoso
+                for key in ["nombre", "precio", "cantidad", "compania", "fecha"]:
+                    if key in st.session_state:
+                        del st.session_state[key]
+                # 🔄 Forzar reset de la portada
+                st.session_state["portada_key"] += 1 
+
+                st.rerun()
+
         else:
-            print("   ❌ ERROR: Juego no apareció en inventario")
-            return False, None
-    else:
-        print(f"   ❌ ERROR: {resultado['error']}")
-        return False, None
+            st.error(f"❌ {resultado['error']}")
 
-def prueba_busqueda_y_listado(mario_id):
-    """Prueba las funciones de búsqueda y listado"""
-    print("\n" + "=" * 60)
-    print("🧪 PRUEBAS DE BÚSQUEDA Y LISTADO")
-    print("=" * 60)
-    
-    if not mario_id:
-        print("   ⚠️  Saltando pruebas de búsqueda (ID no disponible)")
-        return False
-    
-    # Test 1: Buscar por ID existente
-    print("\n1. Buscar juego por ID...")
-    resultado = buscar_por_Id(mario_id)
-    
-    if resultado["ok"]:
-        juego = resultado["resultado"]
-        print(f"   ✅ ENCONTRADO: {juego['nombre']}")
-        print(f"   💰 Precio: ${juego['precio']}")
-        print(f"   🖼️ Portada: {juego['portada']}")
-        
-        # Verificar que la portada es una ruta string, no objeto
-        if isinstance(juego['portada'], str) and juego['portada'].startswith("imagenes/portadas/"):
-            print("   ✅ Portada es ruta string válida")
-        else:
-            print(f"   ❌ ERROR: Portada no es ruta válida: {type(juego['portada'])} - {juego['portada']}")
-            return False
-    else:
-        print(f"   ❌ ERROR: {resultado['error']}")
-        return False
-    
-    # Test 2: Buscar por ID inexistente
-    print("\n2. Buscar por ID inexistente...")
-    resultado = buscar_por_Id("id-inexistente-123")
-    
-    if not resultado["ok"]:
-        print(f"   ✅ CORRECTO: {resultado['error']}")
-    else:
-        print("   ❌ ERROR: Debió fallar con ID inexistente")
-        return False
-    
-    # Test 3: Listar todos los juegos
-    print("\n3. Listar todos los juegos...")
-    resultado = listar_juegos()
-    
-    if resultado["ok"]:
-        juegos = resultado["resultado"]
-        print(f"   📊 Total de juegos: {len(juegos)}")
-        for juego in juegos:
-            print(f"   🎮 {juego['nombre']} (ID: {juego['id']})")
-        return True
-    else:
-        print(f"   ❌ ERROR: {resultado['error']}")
-        return False
-
-def prueba_repositorio_directo():
-    """Prueba directa del repositorio"""
-    print("\n" + "=" * 60)
-    print("🧪 PRUEBAS DIRECTAS DEL REPOSITORIO")
-    print("=" * 60)
-    
-    limpiar_inventario()
-    
-    # Test directo del repositorio
-    from repositorio import agregar_juego, buscar_por_id
-    
-    juego_directo = {
-        "id": "test-directo-123",
-        "nombre": "Juego de Prueba Directa",
-        "precio": 39.99,
-        "cantidad": 7,
-        "compania": "Test Company",
-        "portada": "imagenes/portadas/direct_test.png",  # Ruta de portada
-        "fecha_publicacion": "2023-01-01"
-    }
-    
-    agregar_juego(juego_directo)
-    
-    # Verificar que se guardó
-    inventario = obtener_inventario()
-    print(f"   📦 Juegos en inventario: {len(inventario)}")
-    
-    # Buscar el juego agregado
-    juego_encontrado = buscar_por_id("test-directo-123")
-    if juego_encontrado:
-        print(f"   ✅ Juego encontrado: {juego_encontrado['nombre']}")
-        return True
-    else:
-        print("   ❌ Juego no encontrado")
-        return False
-
-def mostrar_estado_final():
-    """Muestra el estado final del sistema"""
-    print("\n" + "=" * 60)
-    print("📊 ESTADO FINAL DEL INVENTARIO")
-    print("=" * 60)
-    
-    inventario = obtener_inventario()
-    print(f"Total de juegos en inventario: {len(inventario)}")
-    
-    if inventario:
-        print("\n📋 Lista completa de juegos:")
-        for i, juego in enumerate(inventario, 1):
-            print(f"{i}. {juego['nombre']}")
-            print(f"   ID: {juego['id']}")
-            print(f"   Precio: ${juego['precio']}")
-            print(f"   Cantidad: {juego['cantidad']} unidades")
-            print(f"   Portada: {juego['portada']}")
-            print(f"   Fecha: {juego['fecha_publicacion']}")
-            print()
-
-def main():
-    """Función principal de pruebas"""
-    print("🎮 SISTEMA DE INVENTARIO DE VIDEOJUEGOS")
-    print("🔧 EJECUTANDO PRUEBAS CON TU CÓDIGO ACTUAL")
-    print("📝 Portada es OBLIGATORIA según tu configuración")
-    print()
-    
-    try:
-        # Asegurar que el inventario existe
-        inicializar_inventario()
-        
-        # Ejecutar pruebas
-        prueba1 = prueba_validaciones_modelo()
-        prueba2, mario_id = prueba_servicio_agregar()
-        prueba3 = prueba_busqueda_y_listado(mario_id) if prueba2 else False
-        prueba4 = prueba_repositorio_directo()
-        
-        mostrar_estado_final()
-        
-        # Resumen de resultados
-        print("=" * 60)
-        print("📈 RESUMEN DE PRUEBAS")
-        print("=" * 60)
-        print(f"✅ Validaciones modelo: {'Éxito' if prueba1 else 'Fallo'}")
-        print(f"✅ Servicio agregar: {'Éxito' if prueba2 else 'Fallo'}")
-        print(f"✅ Búsqueda/listado: {'Éxito' if prueba3 else 'Fallo'}")
-        print(f"✅ Repositorio directo: {'Éxito' if prueba4 else 'Fallo'}")
-        
-        if all([prueba1, prueba2, prueba3, prueba4]):
-            print("\n🎉 ¡Todas las pruebas pasaron! El sistema funciona correctamente.")
-        else:
-            print("\n⚠️  Algunas pruebas fallaron. Revisa los mensajes de error.")
-            
+    except ValueError as ve:
+            st.error(f"❌ Error de validación: {ve}")
     except Exception as e:
-        print(f"\n💥 ERROR CRÍTICO: {e}")
-        import traceback
-        traceback.print_exc()
+            st.error(f"⚠️ Error inesperado: {e}")
 
-if __name__ == "__main__":
-    main()
+# Mostrar juegos registrados
+st.subheader("📋 Videojuegos Disponibles")
+
+# ✅ Campo de búsqueda por ID
+busqueda_id = st.text_input("🔎 Buscar por ID:")
+
+if busqueda_id:
+    resultado = servicio.buscar_por_Id(busqueda_id)
+    if resultado["ok"]:
+        juegos = [resultado["resultado"]]
+    else:
+        st.error(f"❌ {resultado['error']}")
+        juegos = []
+else:
+    # Si no se busca nada, mostrar todo
+    juegos = repositorio.listar_juegos()
+
+if juegos:
+    # Encabezados de la tabla
+    cols = st.columns([1, 1, 2, 1, 1, 2, 2])  # Ajusta proporciones a tu gusto
+    headers = ["Portada", "ID", "Nombre", "Precio", "Stock", "Compañía", "Fecha"]
+    for col, header in zip(cols, headers):
+        col.markdown(f"**{header}**")
+
+    # Filas de la tabla
+    for j in juegos:
+        cols = st.columns([1, 1, 2, 1, 1, 2, 2])
+
+        # Portada
+        with cols[0]:
+            ruta_base = Path(__file__).parent.parent
+            ruta_imagen = ruta_base / j.get("portada", "")
+            if ruta_imagen.exists():
+                st.image(str(ruta_imagen), width=60)
+            else:
+                st.write("📷")
+
+        # Otras columnas
+        cols[1].write(j["id"])
+        cols[2].write(j["nombre"])
+        cols[3].write(f"${j['precio']}")
+        cols[4].write(j["cantidad"])
+        cols[5].write(j["compania"])
+        cols[6].write(j["fecha_publicacion"])
+else:
+    st.info("No hay videojuegos registrados todavía.")
+

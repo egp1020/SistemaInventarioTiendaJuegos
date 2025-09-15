@@ -1,1 +1,29 @@
-[]
+[
+    {
+        "id": "850886a7-7491-4503-8de6-cc68c99b5809",
+        "nombre": "Mario Kart Ds",
+        "precio": 0.0,
+        "cantidad": 4560,
+        "compania": "Nintendo Ds",
+        "portada": "imagenes/portadas/05fa2f098daff4332cd9f43209b315447cce9f64bb580ce63e83309da53a84a0.jpg",
+        "fecha_publicacion": "2005-11-05"
+    },
+    {
+        "id": "f732b081-b76d-4022-8298-0ac7f8aa7940",
+        "nombre": "Call of duty",
+        "precio": 4570.0,
+        "cantidad": 45,
+        "compania": "Infinity ward",
+        "portada": "imagenes/portadas/206a88462e8a80875b238e7d44d56321d9644dded48f13475982a44f7c617a5f.jpg",
+        "fecha_publicacion": "2001-11-25"
+    },
+    {
+        "id": "eb072e9d-3d27-45c0-b7fe-d86e681725bc",
+        "nombre": "Amomg Us",
+        "precio": 29.85,
+        "cantidad": 4560,
+        "compania": "Among Us",
+        "portada": "imagenes/portadas/bd10c75696113623dab73bc4f429479fbc130b96b41fe79fdb7e46bb7054a635.jpg",
+        "fecha_publicacion": "1998-04-21"
+    }
+]
