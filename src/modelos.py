@@ -28,9 +28,9 @@ class Videojuego:
         #validar que los campos esten llenos
         if not self.nombre:
             raise ValueError("El nombre es obligatorio")
-        if self.precio is None:
+        if self.precio is 0:
             raise ValueError("El precio no puede estar vacio")
-        if self.cantidad is None:
+        if self.cantidad is 0:
             raise ValueError("La cantidad no puede estar vacia")
         if not self.compania:
             raise ValueError("La compañía es obligatoria")
@@ -40,9 +40,9 @@ class Videojuego:
             raise ValueError("La fecha es obligatoria")
         #verificar errores logicos
         if self.precio <= 0:
-            raise ValueError("El precio no puede ser negativo")
-        if self.cantidad < 0:
-            raise ValueError("La cantidad no puede ser negativa")
+            raise ValueError("El precio no puede ser menor o igual a 0")
+        if self.cantidad <= 0:
+            raise ValueError("La cantidad no puede ser menor o igual a 0")
 
     def to_dict(self):
         return asdict(self)
