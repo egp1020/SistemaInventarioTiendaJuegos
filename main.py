@@ -101,12 +101,21 @@ if submit:
     except Exception as e:
         st.error(f"⚠️ Error inesperado: {e}")
 
+
 # Mostrar juegos registrados
 st.subheader("📋 Videojuegos Disponibles")
 
-# ✅ Campo de búsqueda por ID
-busqueda_id = st.text_input("🔎 Buscar por ID:")
+col1, col2, col3 = st.columns(3)
+with col1:
+    busqueda_id = st.text_input("🔎 Buscar por ID:")
+with col2:
+    busqueda_nombre = st.text_input("🔎 Buscar por Nombre:")
+with col3:
+    busqueda_compania = st.text_input("🔎 Buscar por Compañía:")
 
+juegos = repositorio.listar_juegos()
+
+# Filtrar por ID
 if busqueda_id:
     resultado = servicio.buscar_por_Id(busqueda_id)
     if resultado["ok"]:
@@ -114,9 +123,19 @@ if busqueda_id:
     else:
         st.error(f"❌ {resultado['error']}")
         juegos = []
-else:
-    # Si no se busca nada, mostrar todo
-    juegos = repositorio.listar_juegos()
+# Filtrar por Nombre
+elif busqueda_nombre:
+    resultado = servicio.buscar_por_nombre(busqueda_nombre)
+    if resultado["ok"]:
+        juegos = [resultado["resultado"]]
+    else:
+        st.error(f"❌ {resultado['error']}")
+        juegos = []
+# Filtrar por Compañía
+elif busqueda_compania:
+    juegos = [j for j in juegos if busqueda_compania.lower() in j["compania"].lower()]
+    if not juegos:
+        st.info("No se encontraron videojuegos para esa compañía.")
 
 if juegos:
     # Encabezados de la tabla
