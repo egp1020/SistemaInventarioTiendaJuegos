@@ -2,7 +2,6 @@ name: CI - Build & Check
 
 on:
   push:
-
     branches: [ "**" ]     # corre en cualquier push
 
   pull_request:
