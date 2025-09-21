@@ -1,14 +1,13 @@
-import base64
 from pathlib import Path
 import streamlit as st
-from datetime import date, datetime
-from src.modelos import Videojuego
+from datetime import date
 from src import repositorio
 from src.servicio_imagenes import servicio_imagenes
-from src import servicio 
+from src import servicio
 
 servicio_img = servicio_imagenes()
 
+st.set_page_config(layout="wide")
 st.title("🎮 Registro de Videojuegos")
 st.subheader("Formulario para agregar un nuevo videojuego")
 
@@ -20,6 +19,7 @@ defaults = {
     "compania": "",
     "fecha": None
 }
+
 for k, v in defaults.items():
     if k not in st.session_state:
         st.session_state[k] = v
@@ -34,14 +34,19 @@ with st.form("formulario_juego", clear_on_submit=False):
     cantidad = st.number_input("Stock", step=1, min_value=0, key="cantidad")
     compania = st.text_input("Compañía", key="compania")
     if st.session_state["fecha"] is None:
-        fecha_str = st.text_input("Fecha de publicación (YYYY-MM-DD)", value="")
+        fecha_str = st.text_input(
+            "Fecha de publicación (YYYY-MM-DD)",
+            value=""
+        )
         fecha_val = None
         if fecha_str:
             try:
                 fecha_val = date.fromisoformat(fecha_str)
                 st.session_state["fecha"] = fecha_val
             except ValueError:
-                st.warning("⚠️ Ingrese una fecha válida con formato YYYY-MM-DD")
+                st.warning(
+                    "⚠️ Ingrese una fecha válida con formato YYYY-MM-DD"
+                )
     else:
         fecha_val = st.date_input(
             "Fecha de publicación (YYYY-MM-DD)",
@@ -51,7 +56,7 @@ with st.form("formulario_juego", clear_on_submit=False):
             format="YYYY-MM-DD",
             key="fecha"
         )
-    
+
     # ✅ File uploader SIN valor por defecto
     # ✅ File uploader con key dinámico
     portada = st.file_uploader(
@@ -68,40 +73,43 @@ if submit:
     compania_val = compania.strip()
     portada_val = portada
     fecha_final = fecha_val
-    
+
     try:
         if cantidad_val <= 0:
             raise ValueError("El stock es obligatorio y debe ser mayor que 0")
         if fecha_final is None:
             raise ValueError("La fecha es obligatoria")
         resultado = servicio.agregar_videojuego(
-        nombre_val,
-        precio_val,
-        cantidad_val,
-        compania_val,
-        portada_val,
-        fecha_val.strftime("%Y-%m-%d")
+            nombre_val,
+            precio_val,
+            cantidad_val,
+            compania_val,
+            portada_val,
+            fecha_val.strftime("%Y-%m-%d")
         )
 
         if resultado["ok"]:
-                st.success(f"✅ Videojuego agregado exitosamente. ID generado: {resultado['id']}")
+            st.success(
+                f"✅ Videojuego agregado exitosamente.\n"
+                f"ID generado: {resultado['id']}"
+            )
 
-                # 🔑 Limpiar solo si el registro fue exitoso
-                for key in ["nombre", "precio", "cantidad", "compania", "fecha"]:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                # 🔄 Forzar reset de la portada
-                st.session_state["portada_key"] += 1 
+            # 🔑 Limpiar solo si el registro fue exitoso
+            for key in ["nombre", "precio", "cantidad", "compania", "fecha"]:
+                if key in st.session_state:
+                    del st.session_state[key]
+            # 🔄 Forzar reset de la portada
+            st.session_state["portada_key"] += 1
 
-                st.rerun()
+            st.rerun()
 
         else:
             st.error(f"❌ {resultado['error']}")
 
     except ValueError as ve:
-            st.error(f"❌ Error de validación: {ve}")
+        st.error(f"❌ Error de validación: {ve}")
     except Exception as e:
-            st.error(f"⚠️ Error inesperado: {e}")
+        st.error(f"⚠️ Error inesperado: {e}")
 
 # Mostrar juegos registrados
 st.subheader("📋 Videojuegos Disponibles")
@@ -123,7 +131,16 @@ else:
 if juegos:
     # Encabezados de la tabla
     cols = st.columns([1, 1, 2, 1, 1, 2, 2])  # Ajusta proporciones a tu gusto
-    headers = ["Portada", "ID", "Nombre", "Precio", "Stock", "Compañía", "Fecha"]
+    headers = [
+        "ID",
+        "Portada",
+        "Nombre",
+        "Precio",
+        "Stock",
+        "Compañía",
+        "Fecha"
+    ]
+
     for col, header in zip(cols, headers):
         col.markdown(f"**{header}**")
 
@@ -132,7 +149,7 @@ if juegos:
         cols = st.columns([1, 1, 2, 1, 1, 2, 2])
 
         # Portada
-        with cols[0]:
+        with cols[1]:
             ruta_base = Path(__file__).parent.parent
             ruta_imagen = ruta_base / j.get("portada", "")
             if ruta_imagen.exists():
@@ -141,7 +158,7 @@ if juegos:
                 st.write("📷")
 
         # Otras columnas
-        cols[1].write(j["id"])
+        cols[0].write(j["id"])
         cols[2].write(j["nombre"])
         cols[3].write(f"${j['precio']}")
         cols[4].write(j["cantidad"])
@@ -149,4 +166,3 @@ if juegos:
         cols[6].write(j["fecha_publicacion"])
 else:
     st.info("No hay videojuegos registrados todavía.")
-
