@@ -12,13 +12,7 @@ st.title("🎮 Registro de Videojuegos")
 st.subheader("Formulario para agregar un nuevo videojuego")
 
 # Inicializar valores por defecto en session_state (si no existen)
-defaults = {
-    "nombre": "",
-    "precio": 0.0,
-    "cantidad": 0,
-    "compania": "",
-    "fecha": None
-}
+defaults = {"nombre": "", "precio": 0.0, "cantidad": 0, "compania": "", "fecha": None}
 
 for k, v in defaults.items():
     if k not in st.session_state:
@@ -34,19 +28,14 @@ with st.form("formulario_juego", clear_on_submit=False):
     cantidad = st.number_input("Stock", step=1, min_value=0, key="cantidad")
     compania = st.text_input("Compañía", key="compania")
     if st.session_state["fecha"] is None:
-        fecha_str = st.text_input(
-            "Fecha de publicación (YYYY-MM-DD)",
-            value=""
-        )
+        fecha_str = st.text_input("Fecha de publicación (YYYY-MM-DD)", value="")
         fecha_val = None
         if fecha_str:
             try:
                 fecha_val = date.fromisoformat(fecha_str)
                 st.session_state["fecha"] = fecha_val
             except ValueError:
-                st.warning(
-                    "⚠️ Ingrese una fecha válida con formato YYYY-MM-DD"
-                )
+                st.warning("⚠️ Ingrese una fecha válida con formato YYYY-MM-DD")
     else:
         fecha_val = st.date_input(
             "Fecha de publicación (YYYY-MM-DD)",
@@ -54,7 +43,7 @@ with st.form("formulario_juego", clear_on_submit=False):
             min_value=date(1900, 1, 1),
             max_value=date(2030, 12, 31),
             format="YYYY-MM-DD",
-            key="fecha"
+            key="fecha",
         )
 
     # ✅ File uploader SIN valor por defecto
@@ -62,7 +51,8 @@ with st.form("formulario_juego", clear_on_submit=False):
     portada = st.file_uploader(
         "Portada",
         type=["png", "jpg", "jpeg"],
-        key=f"portada_{st.session_state['portada_key']}")
+        key=f"portada_{st.session_state['portada_key']}",
+    )
 
     submit = st.form_submit_button("💾 Guardar")
 
@@ -85,7 +75,7 @@ if submit:
             cantidad_val,
             compania_val,
             portada_val,
-            fecha_val.strftime("%Y-%m-%d")
+            fecha_val.strftime("%Y-%m-%d"),
         )
 
         if resultado["ok"]:
@@ -131,15 +121,7 @@ else:
 if juegos:
     # Encabezados de la tabla
     cols = st.columns([1, 1, 2, 1, 1, 2, 2])  # Ajusta proporciones a tu gusto
-    headers = [
-        "ID",
-        "Portada",
-        "Nombre",
-        "Precio",
-        "Stock",
-        "Compañía",
-        "Fecha"
-    ]
+    headers = ["ID", "Portada", "Nombre", "Precio", "Stock", "Compañía", "Fecha"]
 
     for col, header in zip(cols, headers):
         col.markdown(f"**{header}**")

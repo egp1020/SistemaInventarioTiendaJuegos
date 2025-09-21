@@ -5,23 +5,13 @@ from src.servicio_imagenes import servicio_imagenes
 servicio_img = servicio_imagenes()
 
 
-def agregar_videojuego(
-    nombre,
-    precio,
-    cantidad,
-    compania,
-    portada,
-    fecha_publicacion
-):
+def agregar_videojuego(nombre, precio, cantidad, compania, portada, fecha_publicacion):
     """Agrega un nuevo videojuego al inventario
     antes de que se agregue se verifica"""
     try:
         # se agrega la imagen primero
         if not portada:
-            return {
-                "ok": False,
-                "error": "La portada es obligatoria"
-            }
+            return {"ok": False, "error": "La portada es obligatoria"}
         ruta_portada = servicio_img.guardar_imagen(portada, portada.name)
         # luego se crea el juego
         juego = Videojuego(
@@ -30,18 +20,18 @@ def agregar_videojuego(
             cantidad=cantidad,
             compania=compania,
             portada=ruta_portada,
-            fecha_publicacion=fecha_publicacion
+            fecha_publicacion=fecha_publicacion,
         )
     except ValueError as e:
         return {
             "ok": False,
-            "error": str(e)  # mensaje de error del modelo (ej: fecha inválida
+            "error": str(e),  # mensaje de error del modelo (ej: fecha inválida
         }
     repositorio.agregar_juego(juego.to_dict())
     return {
         "ok": True,
         "id": juego.id,
-        "mensaje ": f"Videojuego '{juego.nombre}' agregado con éxito"
+        "mensaje ": f"Videojuego '{juego.nombre}' agregado con éxito",
     }
 
 
@@ -79,9 +69,7 @@ def buscar_por_nombre(nombre):
     else:
         return {
             "ok": False,
-            "error": (
-                f"No existe un videojuego con nombre '{nombre}'"
-            )
+            "error": (f"No existe un videojuego con nombre '{nombre}'"),
         }
 
 

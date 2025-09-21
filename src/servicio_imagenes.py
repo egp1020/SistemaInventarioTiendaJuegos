@@ -16,7 +16,7 @@ class servicio_imagenes:
         """
 
         # Leer contenido en bytes
-        if hasattr(archivo_imagen, 'getvalue'):
+        if hasattr(archivo_imagen, "getvalue"):
             contenido = archivo_imagen.getvalue()
         else:
             contenido = archivo_imagen.read()
