@@ -1,9 +1,11 @@
-#librerias usadas: dataclasses
-#la portada se guarda como una ruta hacia carpeta que contiene las imagenes
-#la fecha aunque se ingresa en el formato date se guarda como un string
+# librerias usadas: dataclasses
+# la portada se guarda como una ruta hacia carpeta que contiene las imagenes
+# la fecha aunque se ingresa en el formato date se guarda como un string
 from dataclasses import dataclass, asdict, field
 import uuid
 from datetime import datetime
+
+
 @dataclass
 class Videojuego:
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -13,6 +15,7 @@ class Videojuego:
     compania: str = ""
     portada: str = ""
     fecha_publicacion: str = ""
+
     def __post_init__(self):
         # Validar formatos
         try:
@@ -24,21 +27,21 @@ class Videojuego:
         if not isinstance(self.cantidad, int):
             raise ValueError("La cantidad debe ser un numero")
         if not isinstance(self.precio, (int, float)):
-            raise ValueError("El precio debe ser un número") 
-        #validar que los campos esten llenos
+            raise ValueError("El precio debe ser un número")
+        # validar que los campos esten llenos
         if not self.nombre:
             raise ValueError("El nombre es obligatorio")
-        if self.precio is 0:
+        if self.precio == 0:
             raise ValueError("El precio no puede estar vacio")
-        if self.cantidad is 0:
+        if self.cantidad == 0:
             raise ValueError("La cantidad no puede estar vacia")
         if not self.compania:
             raise ValueError("La compañía es obligatoria")
         if not self.portada:
-            raise ValueError("La portada es obligatoria")    
+            raise ValueError("La portada es obligatoria")
         if self.fecha_publicacion is None:
             raise ValueError("La fecha es obligatoria")
-        #verificar errores logicos
+        # verificar errores logicos
         if self.precio <= 0:
             raise ValueError("El precio no puede ser menor o igual a 0")
         if self.cantidad <= 0:
@@ -46,4 +49,3 @@ class Videojuego:
 
     def to_dict(self):
         return asdict(self)
-    

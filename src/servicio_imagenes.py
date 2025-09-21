@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import hashlib
 
+
 class servicio_imagenes:
     def __init__(self, carpeta_base="imagenes/portadas"):
         self.carpeta_portadas = Path(carpeta_base)
@@ -15,7 +16,10 @@ class servicio_imagenes:
         """
 
         # Leer contenido en bytes
-        contenido = archivo_imagen.getvalue() if hasattr(archivo_imagen, 'getvalue') else archivo_imagen.read()
+        if hasattr(archivo_imagen, 'getvalue'):
+            contenido = archivo_imagen.getvalue()
+        else:
+            contenido = archivo_imagen.read()
 
         # Calcular hash SHA256
         hash_archivo = hashlib.sha256(contenido).hexdigest()
@@ -30,7 +34,6 @@ class servicio_imagenes:
         if not ruta_guardado.exists():
             with open(ruta_guardado, "wb") as f:
                 f.write(contenido)
-
 
         # Retornar ruta relativa para guardar en JSON
         return f"imagenes/portadas/{nombre_unico}"
