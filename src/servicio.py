@@ -182,3 +182,16 @@ def obtener_estado_inventario() -> Dict[str, Any]:
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
+    
+    
+def descargar_tabla_indices_como_json() -> Dict[str, Any]:
+    """
+    Prepara los datos de la tabla de índices para descargar como archivo JSON
+    """
+    try:
+        resultado = repositorio.descargar_tabla_indices()
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al preparar descarga de índices: {str(e)}"}
+    
+

@@ -1,266 +1,169 @@
-# [file name]: test_videojuegos.py
-import sys
+# archivo: src/test_agregar_eliminar.py
 import os
+import sys
+from pathlib import Path
+from io import BytesIO
 
-# Añadir el directorio actual al path para importar los módulos
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Como está en la misma carpeta src, podemos importar directamente
+from servicio import agregar_videojuego, eliminar_juego, buscar_por_Id
+from repositorio import obtener_inventario
+import repositorio
 
-from modelos import Videojuego
-import servicio
-from repositorio import obtener_inventario, guardar_inventario
-import json
-from datetime import datetime
+def crear_imagen_falsa(nombre_archivo="portada_test.jpg"):
+    """Crea una imagen falsa en memoria para pruebas"""
+    imagen_falsa = BytesIO()
+    imagen_falsa.write(b"fake image data for testing purposes")
+    imagen_falsa.name = nombre_archivo
+    imagen_falsa.seek(0)
+    return imagen_falsa
 
-def test_videojuegos():
-    """Función principal de pruebas para validaciones de Videojuego"""
-    
+def limpiar_inventario_manual():
+    """Función manual para limpiar el inventario (alternativa)"""
+    try:
+        ruta_archivo = Path(__file__).parent.parent / "inventario.json"
+        if ruta_archivo.exists():
+            os.remove(ruta_archivo)
+        ruta_indice = Path(__file__).parent.parent / "tabla_hash.json"
+        if ruta_indice.exists():
+            os.remove(ruta_indice)
+        print("✅ Inventario limpiado manualmente")
+    except Exception as e:
+        print(f"⚠️  Advertencia al limpiar: {e}")
+
+def test_agregar_y_eliminar():
+    """Prueba completa: Agregar un juego y luego eliminarlo"""
+    print("🧪 INICIANDO PRUEBA: AGREGAR Y ELIMINAR ELEMENTO")
     print("=" * 60)
-    print("INICIANDO PRUEBAS DE VALIDACIÓN DE VIDEOJUEGOS")
-    print("=" * 60)
     
-    # Guardar el inventario original para restaurarlo después
-    inventario_original = obtener_inventario()
+    # Limpiar inventario antes de empezar (usando función manual)
+    limpiar_inventario_manual()
     
-    # Lista para almacenar resultados de pruebas
-    resultados = []
+    # Paso 1: Agregar un juego
+    print("\n1. AGREGANDO JUEGO...")
+    portada = crear_imagen_falsa("test_game_cover.jpg")
     
-    # Caso 1: Falta nombre
-    print("\n1. Probando falta de NOMBRE...")
-    try:
-        juego = Videojuego(
-            nombre="",  # Campo vacío
-            precio=59.99,
-            cantidad=10,
-            compania="Nintendo",
-            portada="imagenes/portadas/mario.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Falta nombre", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Falta nombre", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Falta nombre", f"✗ {e}", "ERROR"))
+    resultado_agregar = agregar_videojuego(
+        nombre="The Legend of Zelda: Tears of the Kingdom",
+        precio=69.99,
+        cantidad=20,
+        compania="Nintendo",
+        portada=portada,
+        fecha_publicacion="2023-05-12"
+    )
     
-    # Caso 2: Falta precio
-    print("\n2. Probando falta de PRECIO...")
-    try:
-        juego = Videojuego(
-            nombre="The Legend of Zelda",
-            precio=0,  # Precio vacío
-            cantidad=10,
-            compania="Nintendo",
-            portada="imagenes/portadas/zelda.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Falta precio", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Falta precio", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Falta precio", f"✗ {e}", "ERROR"))
+    print(f"Resultado agregar: {resultado_agregar}")
     
-    # Caso 3: Precio negativo
-    print("\n3. Probando precio NEGATIVO...")
-    try:
-        juego = Videojuego(
-            nombre="Super Mario",
-            precio=-10.0,  # Precio negativo
-            cantidad=10,
-            compania="Nintendo",
-            portada="imagenes/portadas/mario.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Precio negativo", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Precio negativo", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Precio negativo", f"✗ {e}", "ERROR"))
+    if not resultado_agregar["ok"]:
+        print("❌ ERROR: No se pudo agregar el juego")
+        return False
     
-    # Caso 4: Falta cantidad
-    print("\n4. Probando falta de CANTIDAD...")
-    try:
-        juego = Videojuego(
-            nombre="Metroid Prime",
-            precio=49.99,
-            cantidad=0,  # Cantidad vacía
-            compania="Nintendo",
-            portada="imagenes/portadas/metroid.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Falta cantidad", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Falta cantidad", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Falta cantidad", f"✗ {e}", "ERROR"))
+    juego_id = resultado_agregar["id"]
+    print(f"✅ Juego agregado exitosamente con ID: {juego_id}")
     
-    # Caso 5: Cantidad negativa
-    print("\n5. Probando cantidad NEGATIVA...")
-    try:
-        juego = Videojuego(
-            nombre="Donkey Kong",
-            precio=39.99,
-            cantidad=-5,  # Cantidad negativa
-            compania="Nintendo",
-            portada="imagenes/portadas/dk.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Cantidad negativa", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Cantidad negativa", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Cantidad negativa", f"✗ {e}", "ERROR"))
+    # Paso 2: Verificar que el juego fue agregado
+    print("\n2. VERIFICANDO QUE EL JUEGO FUE AGREGADO...")
+    resultado_busqueda = buscar_por_Id(juego_id)
+    print(f"Resultado búsqueda: {resultado_busqueda}")
     
-    # Caso 6: Cantidad decimal (no permitido)
-    print("\n6. Probando cantidad DECIMAL...")
-    try:
-        juego = Videojuego(
-            nombre="Kirby",
-            precio=29.99,
-            cantidad=10.5,  # Cantidad decimal
-            compania="Nintendo",
-            portada="imagenes/portadas/kirby.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Cantidad decimal", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Cantidad decimal", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Cantidad decimal", f"✗ {e}", "ERROR"))
+    if not resultado_busqueda["ok"]:
+        print("❌ ERROR: No se encontró el juego después de agregarlo")
+        return False
     
-    # Caso 7: Falta compañía
-    print("\n7. Probando falta de COMPAÑÍA...")
-    try:
-        juego = Videojuego(
-            nombre="Pokémon",
-            precio=59.99,
-            cantidad=15,
-            compania="",  # Compañía vacía
-            portada="imagenes/portadas/pokemon.jpg",
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Falta compañía", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Falta compañía", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Falta compañía", f"✗ {e}", "ERROR"))
+    juego_encontrado = resultado_busqueda["resultado"]
+    print(f"✅ Juego encontrado: {juego_encontrado['nombre']}")
     
-    # Caso 8: Falta portada
-    print("\n8. Probando falta de PORTADA...")
-    try:
-        juego = Videojuego(
-            nombre="Animal Crossing",
-            precio=54.99,
-            cantidad=20,
-            compania="Nintendo",
-            portada="",  # Portada vacía
-            fecha_publicacion="2023-05-15"
-        )
-        resultados.append(("Falta portada", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Falta portada", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Falta portada", f"✗ {e}", "ERROR"))
+    # Verificar datos del juego
+    assert juego_encontrado["nombre"] == "The Legend of Zelda: Tears of the Kingdom"
+    assert juego_encontrado["precio"] == 69.99
+    assert juego_encontrado["cantidad"] == 20
+    assert juego_encontrado["compania"] == "Nintendo"
+    print("✅ Datos del juego verificados correctamente")
     
-    # Caso 9: Falta fecha
-    print("\n9. Probando falta de FECHA...")
-    try:
-        juego = Videojuego(
-            nombre="Splatoon",
-            precio=49.99,
-            cantidad=8,
-            compania="Nintendo",
-            portada="imagenes/portadas/splatoon.jpg",
-            fecha_publicacion=""  # Fecha vacía
-        )
-        resultados.append(("Falta fecha", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Falta fecha", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Falta fecha", f"✗ {e}", "ERROR"))
+    # Paso 3: Eliminar el juego
+    print("\n3. ELIMINANDO JUEGO...")
+    resultado_eliminar = eliminar_juego(juego_id)
+    print(f"Resultado eliminar: {resultado_eliminar}")
     
-    # Caso 10: Formato de fecha incorrecto
-    print("\n10. Probando formato de FECHA incorrecto...")
-    try:
-        juego = Videojuego(
-            nombre="Mario Kart",
-            precio=59.99,
-            cantidad=12,
-            compania="Nintendo",
-            portada="imagenes/portadas/mariokart.jpg",
-            fecha_publicacion="15-05-2023"  # Formato incorrecto
-        )
-        resultados.append(("Formato fecha incorrecto", "FALLÓ - No detectó error", "ERROR"))
-    except ValueError as e:
-        print(f"   ✓ Correctamente detectado: {e}")
-        resultados.append(("Formato fecha incorrecto", f"✓ {e}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Formato fecha incorrecto", f"✗ {e}", "ERROR"))
+    if not resultado_eliminar["ok"]:
+        print("❌ ERROR: No se pudo eliminar el juego")
+        return False
     
-    # Caso 11: TODOS los parámetros correctos
-    print("\n11. Probando TODOS los parámetros CORRECTOS...")
-    try:
-        juego = Videojuego(
-            nombre="The Legend of Zelda: Breath of the Wild",
-            precio=69.99,
-            cantidad=25,
-            compania="Nintendo",
-            portada="imagenes/portadas/zelda_botw.jpg",
-            fecha_publicacion="2023-03-03"  # Formato correcto YYYY-MM-DD
-        )
-        print(f"   ✓ Juego creado exitosamente: {juego.nombre}")
-        print(f"     ID generado: {juego.id}")
-        resultados.append(("Todos parámetros correctos", f"✓ Juego creado: {juego.nombre}", "ÉXITO"))
-    except Exception as e:
-        print(f"   ✗ Error inesperado: {e}")
-        resultados.append(("Todos parámetros correctos", f"✗ {e}", "ERROR"))
+    print("✅ Juego eliminado exitosamente")
     
-    # Mostrar resumen de resultados
+    # Paso 4: Verificar que el juego fue eliminado
+    print("\n4. VERIFICANDO QUE EL JUEGO FUE ELIMINADO...")
+    resultado_busqueda_despues = buscar_por_Id(juego_id)
+    print(f"Resultado búsqueda después de eliminar: {resultado_busqueda_despues}")
+    
+    if resultado_busqueda_despues["ok"]:
+        print("❌ ERROR: El juego todavía existe después de eliminarlo")
+        return False
+    
+    print("✅ Juego correctamente eliminado (no se encuentra en búsquedas)")
+    
+    # Paso 5: Verificar inventario vacío
+    print("\n5. VERIFICANDO INVENTARIO FINAL...")
+    inventario_final = obtener_inventario()
+    juegos_con_ese_id = [j for j in inventario_final if j["id"] == juego_id]
+    
+    if len(juegos_con_ese_id) > 0:
+        print("❌ ERROR: El juego todavía existe en el inventario")
+        return False
+    
+    print(f"✅ Inventario final: {len(inventario_final)} juegos")
+    print("✅ El juego fue completamente removido del sistema")
+    
+    # Resumen final
     print("\n" + "=" * 60)
-    print("RESUMEN DE PRUEBAS")
+    print("🎉 PRUEBA COMPLETADA EXITOSAMENTE")
+    print("=" * 60)
+    print("✓ Juego agregado correctamente")
+    print("✓ Juego encontrado en búsquedas") 
+    print("✓ Juego eliminado correctamente")
+    print("✓ Juego removido de búsquedas")
+    print("✓ Juego removido del inventario")
+    print(f"✓ ID del juego testeado: {juego_id}")
+    
+    return True
+
+def test_eliminar_juego_inexistente():
+    """Prueba eliminar un juego que no existe"""
+    print("\n\n🧪 PRUEBA: ELIMINAR JUEGO INEXISTENTE")
     print("=" * 60)
     
-    exitos = 0
-    fallos = 0
+    resultado = eliminar_juego("id-inexistente-99999")
+    print(f"Resultado eliminar juego inexistente: {resultado}")
     
-    for prueba, resultado, estado in resultados:
-        if estado == "ÉXITO":
-            exitos += 1
-            print(f"✓ {prueba}: {resultado}")
-        else:
-            fallos += 1
-            print(f"✗ {prueba}: {resultado}")
-    
-    print("\n" + "=" * 60)
-    print(f"TOTAL: {exitos} pruebas exitosas, {fallos} pruebas fallidas")
-    
-    if fallos == 0:
-        print("🎉 ¡TODAS LAS PRUEBAS PASARON EXITOSAMENTE!")
+    # Debería fallar (ok: False)
+    if not resultado["ok"]:
+        print("✅ Comportamiento correcto: No se puede eliminar juego inexistente")
+        return True
     else:
-        print(f"⚠️  {fallos} pruebas fallaron - revisar las validaciones")
-    
-    print("=" * 60)
-    
-    # Restaurar el inventario original
-    guardar_inventario(inventario_original)
-    print("\nInventario restaurado al estado original")
+        print("❌ Comportamiento incorrecto: Se eliminó un juego que no existe")
+        return False
 
 if __name__ == "__main__":
-    test_videojuegos()
+    try:
+        # Ejecutar prueba principal
+        resultado_principal = test_agregar_y_eliminar()
+        
+        # Ejecutar prueba de eliminación de juego inexistente
+        resultado_inexistente = test_eliminar_juego_inexistente()
+        
+        # Resumen general
+        print("\n" + "=" * 60)
+        print("📊 RESUMEN GENERAL DE PRUEBAS")
+        print("=" * 60)
+        print(f"Prueba agregar/eliminar: {'✅ PASÓ' if resultado_principal else '❌ FALLÓ'}")
+        print(f"Prueba eliminar inexistente: {'✅ PASÓ' if resultado_inexistente else '❌ FALLÓ'}")
+        
+        if resultado_principal and resultado_inexistente:
+            print("\n🎉 ¡TODAS LAS PRUEBAS PASARON EXITOSAMENTE!")
+        else:
+            print("\n⚠️ Algunas pruebas fallaron")
+            
+    except Exception as e:
+        print(f"\n💥 ERROR INESPERADO: {e}")
+        import traceback
+        traceback.print_exc()
+eliminar_juego("a80a5bc8-e8ff-4b76-a369-02a9a7dd8537")
