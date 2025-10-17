@@ -1,6 +1,8 @@
-from src import repositorio
-from src.modelos import Videojuego
-from src.servicio_imagenes import servicio_imagenes
+import repositorio
+from modelos import Videojuego
+from servicio_imagenes import servicio_imagenes
+import json
+from typing import Dict, Any
 
 servicio_img = servicio_imagenes()
 
@@ -83,3 +85,113 @@ def listar_juegos(ordenar_por_nombre=False):
     if ordenar_por_nombre:
         juegos = sorted(juegos, key=lambda j: j["nombre"].lower())
     return {"ok": True, "resultado": juegos}
+
+
+def eliminar_juego(id):
+    """Elimina un videojuego por ID"""
+    try:
+        if not repositorio.juegos_existen():
+            return {"ok": False, "error": "No hay videojuegos registrados"}
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+
+    if not id:
+        return {"ok": False, "error": "El ID es obligatorio"}
+
+    if repositorio.eliminar_juego_por_id(id):
+        return {"ok": True, "mensaje": f"Videojuego con ID {id} eliminado correctamente"}
+    else:
+        return {"ok": False, "error": f"No existe un videojuego con ID {id}"}
+    
+
+def obtener_estadisticas_indice():
+    """Obtiene estadísticas del índice hash"""
+    try:
+        stats = repositorio.obtener_estadisticas_tabla_hash()
+        return {"ok": True, "estadisticas": stats}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    
+
+
+def descargar_inventario_como_json() -> Dict[str, Any]:
+    """
+    Prepara los datos del inventario para descargar como archivo JSON
+    """
+    try:
+        resultado = repositorio.descargar_inventario()
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al preparar descarga: {str(e)}"}
+
+
+def descargar_inventario_como_archivo(ruta_destino: str) -> Dict[str, Any]:
+    """
+    Guarda una copia del inventario en la ruta especificada
+    """
+    try:
+        resultado = repositorio.descargar_inventario(ruta_destino)
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al guardar archivo: {str(e)}"}
+
+
+def cargar_inventario_desde_ruta(ruta_archivo: str) -> Dict[str, Any]:
+    """
+    Carga un inventario desde un archivo JSON en la ruta especificada
+    """
+    try:
+        if not ruta_archivo:
+            return {"ok": False, "error": "No se especificó archivo"}
+        
+        resultado = repositorio.cargar_inventario_desde_archivo(ruta_archivo)
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al cargar archivo: {str(e)}"}
+
+
+def cargar_inventario_desde_json(datos_json: str) -> Dict[str, Any]:
+    """
+    Carga un inventario desde un string JSON
+    Útil cuando el frontend envía el archivo como texto
+    """
+    try:
+        if not datos_json:
+            return {"ok": False, "error": "No se proporcionaron datos JSON"}
+        
+        resultado = repositorio.cargar_inventario_desde_datos(datos_json)
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al procesar JSON: {str(e)}"}
+
+
+def obtener_estado_inventario() -> Dict[str, Any]:
+    """
+    Obtiene información del estado actual del inventario
+    """
+    try:
+        juegos = repositorio.listar_juegos()
+        stats = repositorio.obtener_estadisticas_tabla_hash()
+        
+        return {
+            "ok": True,
+            "total_juegos": len(juegos),
+            "estadisticas_hash": stats,
+            "ruta_archivo": str(repositorio.ruta_archivo),
+            "ultima_actualizacion": repositorio.obtener_ultima_modificacion() if hasattr(repositorio, 'obtener_ultima_modificacion') else "N/A"
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    
+    
+def descargar_tabla_indices_como_json() -> Dict[str, Any]:
+    """
+    Prepara los datos de la tabla de índices para descargar como archivo JSON
+    """
+    try:
+        resultado = repositorio.descargar_tabla_indices()
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al preparar descarga de índices: {str(e)}"}
+    
+
