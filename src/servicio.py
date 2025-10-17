@@ -1,8 +1,8 @@
+from typing import Any, Dict
+
 import repositorio
 from modelos import Videojuego
 from servicio_imagenes import servicio_imagenes
-import json
-from typing import Dict, Any
 
 servicio_img = servicio_imagenes()
 
@@ -99,10 +99,13 @@ def eliminar_juego(id):
         return {"ok": False, "error": "El ID es obligatorio"}
 
     if repositorio.eliminar_juego_por_id(id):
-        return {"ok": True, "mensaje": f"Videojuego con ID {id} eliminado correctamente"}
+        return {
+            "ok": True,
+            "mensaje": f"Videojuego con ID {id} eliminado correctamente",
+        }
     else:
         return {"ok": False, "error": f"No existe un videojuego con ID {id}"}
-    
+
 
 def obtener_estadisticas_indice():
     """Obtiene estadísticas del índice hash"""
@@ -111,7 +114,6 @@ def obtener_estadisticas_indice():
         return {"ok": True, "estadisticas": stats}
     except Exception as e:
         return {"ok": False, "error": str(e)}
-    
 
 
 def descargar_inventario_como_json() -> Dict[str, Any]:
@@ -143,7 +145,7 @@ def cargar_inventario_desde_ruta(ruta_archivo: str) -> Dict[str, Any]:
     try:
         if not ruta_archivo:
             return {"ok": False, "error": "No se especificó archivo"}
-        
+
         resultado = repositorio.cargar_inventario_desde_archivo(ruta_archivo)
         return resultado
     except Exception as e:
@@ -158,7 +160,7 @@ def cargar_inventario_desde_json(datos_json: str) -> Dict[str, Any]:
     try:
         if not datos_json:
             return {"ok": False, "error": "No se proporcionaron datos JSON"}
-        
+
         resultado = repositorio.cargar_inventario_desde_datos(datos_json)
         return resultado
     except Exception as e:
@@ -172,18 +174,22 @@ def obtener_estado_inventario() -> Dict[str, Any]:
     try:
         juegos = repositorio.listar_juegos()
         stats = repositorio.obtener_estadisticas_tabla_hash()
-        
+
         return {
             "ok": True,
             "total_juegos": len(juegos),
             "estadisticas_hash": stats,
             "ruta_archivo": str(repositorio.ruta_archivo),
-            "ultima_actualizacion": repositorio.obtener_ultima_modificacion() if hasattr(repositorio, 'obtener_ultima_modificacion') else "N/A"
+            "ultima_actualizacion": (
+                repositorio.obtener_ultima_modificacion()
+                if hasattr(repositorio, "obtener_ultima_modificacion")
+                else "N/A"
+            ),
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
-    
-    
+
+
 def descargar_tabla_indices_como_json() -> Dict[str, Any]:
     """
     Prepara los datos de la tabla de índices para descargar como archivo JSON
@@ -192,6 +198,7 @@ def descargar_tabla_indices_como_json() -> Dict[str, Any]:
         resultado = repositorio.descargar_tabla_indices()
         return resultado
     except Exception as e:
-        return {"ok": False, "error": f"Error al preparar descarga de índices: {str(e)}"}
-    
-
+        return {
+            "ok": False,
+            "error": f"Error al preparar descarga de índices: {str(e)}",
+        }
