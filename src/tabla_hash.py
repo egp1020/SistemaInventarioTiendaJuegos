@@ -34,8 +34,7 @@ class TablaHash:
             numeros = "0"
 
         # Convertir a número y calcular hash
-        numero_hash = sum(int(digit) * (i + 1)
-                          for i, digit in enumerate(numeros))
+        numero_hash = sum(int(digit) * (i + 1) for i, digit in enumerate(numeros))
 
         # Aplicar módulo para obtener índice en el vector
         return numero_hash % self.tamano
@@ -110,8 +109,7 @@ class TablaHash:
                 actual = actual.siguiente
 
             if lista_posicion:  # Solo guardar posiciones no vacías
-                datos_serializables.append(
-                    {"indice": i, "elementos": lista_posicion})
+                datos_serializables.append({"indice": i, "elementos": lista_posicion})
 
         with open(self.archivo_indice, "w", encoding="utf-8") as f:
             json.dump(
@@ -184,8 +182,7 @@ class TablaHash:
             "factor_carga": factor_carga,
             "longitud_maxima": max(lista_longitudes) if lista_longitudes else 0,
             "longitud_promedio": (
-                sum(lista_longitudes) /
-                len(lista_longitudes) if lista_longitudes else 0
+                sum(lista_longitudes) / len(lista_longitudes) if lista_longitudes else 0
             ),
             "posiciones_ocupadas": len(lista_longitudes),
         }

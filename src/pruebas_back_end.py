@@ -4,6 +4,7 @@ from io import BytesIO
 from pathlib import Path
 
 from repositorio import obtener_inventario
+
 # Como está en la misma carpeta src, podemos importar directamente
 from servicio import agregar_videojuego, buscar_por_Id, eliminar_juego
 
@@ -94,8 +95,7 @@ def test_agregar_y_eliminar():
     # Paso 4: Verificar que el juego fue eliminado
     print("\n4. VERIFICANDO QUE EL JUEGO FUE ELIMINADO...")
     resultado_busqueda_despues = buscar_por_Id(juego_id)
-    print(
-        f"Resultado búsqueda después de eliminar: {resultado_busqueda_despues}")
+    print(f"Resultado búsqueda después de eliminar: {resultado_busqueda_despues}")
 
     if resultado_busqueda_despues["ok"]:
         print("❌ ERROR: El juego todavía existe después de eliminarlo")
