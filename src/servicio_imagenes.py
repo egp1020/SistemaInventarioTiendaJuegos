@@ -1,11 +1,13 @@
+import hashlib
 import os
 from pathlib import Path
-import hashlib
 
 
 class servicio_imagenes:
     def __init__(self, carpeta_base="imagenes/portadas"):
-        self.carpeta_portadas = Path(carpeta_base)
+        # Subir dos carpetas para la carpeta de imágenes
+        BASE_DIR = Path(__file__).parent.parent.parent
+        self.carpeta_portadas = BASE_DIR / carpeta_base
         self.carpeta_portadas.mkdir(parents=True, exist_ok=True)
 
     def guardar_imagen(self, archivo_imagen, nombre_original):

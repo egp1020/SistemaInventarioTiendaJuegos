@@ -1,9 +1,10 @@
-from pathlib import Path
-import streamlit as st
 from datetime import date
-from src import repositorio
+from pathlib import Path
+
+import streamlit as st
+
+from src import repositorio, servicio
 from src.servicio_imagenes import servicio_imagenes
-from src import servicio
 
 servicio_img = servicio_imagenes()
 

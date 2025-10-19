@@ -1,8 +1,8 @@
 # librerias usadas: dataclasses
 # la portada se guarda como una ruta hacia carpeta que contiene las imagenes
 # la fecha aunque se ingresa en el formato date se guarda como un string
-from dataclasses import dataclass, asdict, field
 import uuid
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 
 
