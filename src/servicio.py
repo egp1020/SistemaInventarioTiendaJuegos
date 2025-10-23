@@ -1,8 +1,8 @@
 from typing import Any, Dict
 
-import repositorio
-from modelos import Videojuego
-from servicio_imagenes import servicio_imagenes
+from src import repositorio
+from src.modelos import Videojuego
+from src.servicio_imagenes import servicio_imagenes
 
 servicio_img = servicio_imagenes()
 
@@ -198,7 +198,18 @@ def descargar_tabla_indices_como_json() -> Dict[str, Any]:
         resultado = repositorio.descargar_tabla_indices()
         return resultado
     except Exception as e:
-        return {
-            "ok": False,
-            "error": f"Error al preparar descarga de índices: {str(e)}",
-        }
+        return {"ok": False, "error": f"Error al preparar descarga de índices: {str(e)}"}
+
+def descargar_tabla_indices_como_archivo(ruta_destino: str) -> Dict[str, Any]:
+    """
+    Guarda una copia de la tabla de índices en la ruta especificada
+    """
+    try:
+        if not ruta_destino:
+            return {"ok": False, "error": "No se especificó ruta de destino"}
+        
+        resultado = repositorio.descargar_tabla_indices(ruta_destino)
+        return resultado
+    except Exception as e:
+        return {"ok": False, "error": f"Error al guardar tabla de índices: {str(e)}"}
+

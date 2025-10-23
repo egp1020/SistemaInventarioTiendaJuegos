@@ -5,7 +5,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-from tabla_hash import TablaHash
+from src.tabla_hash import TablaHash
 
 BASE_DIR = Path(__file__).parent.parent.parent
 ruta_archivo = BASE_DIR / "inventario.json"
@@ -272,3 +272,48 @@ def cargar_inventario_desde_datos(datos_json: str) -> Dict[str, Any]:
         return {"ok": False, "error": "El JSON no es válido"}
     except Exception as e:
         return {"ok": False, "error": f"Error al cargar el inventario: {str(e)}"}
+
+def descargar_tabla_indices(ruta_destino: str = None) -> Dict[str, Any]:
+    """
+    Descarga los datos de la tabla hash como JSON
+    """
+    try:
+        # Obtener todos los datos de la tabla hash
+        datos_tabla = []
+        for i in range(tabla_hash.tamano):
+            actual = tabla_hash.tabla[i]
+            while actual is not None:
+                datos_tabla.append({
+                    'id': actual.id_juego,
+                    'nombre': actual.juego.get('nombre', ''),
+                    'indice_hash': i,
+                    'juego_completo': actual.juego
+                })
+                actual = actual.siguiente
+        
+        if ruta_destino:
+            # Guardar en archivo
+            with open(ruta_destino, 'w', encoding='utf-8') as f:
+                json.dump(datos_tabla, f, indent=4, ensure_ascii=False)
+            return {
+                "ok": True,
+                "mensaje": f"Tabla de índices descargada en {ruta_destino}",
+                "ruta": ruta_destino,
+                "total_elementos": len(datos_tabla)
+            }
+        else:
+            # Devolver datos
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            nombre_archivo = f"tabla_indices_{timestamp}.json"
+            
+            return {
+                "ok": True,
+                "datos": datos_tabla,
+                "nombre_archivo": nombre_archivo,
+                "timestamp": timestamp,
+                "total_elementos": len(datos_tabla),
+                "estadisticas": tabla_hash.estadisticas()
+            }
+            
+    except Exception as e:
+        return {"ok": False, "error": f"Error al descargar tabla de índices: {str(e)}"}

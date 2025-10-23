@@ -1,0 +1,20 @@
+[
+    {
+        "id": "63170010-d3e2-4adf-b8c9-4ede2ddceb96",
+        "nombre": "Crash Bandicoot: N. Sane Trilogy",
+        "precio": 39.99,
+        "cantidad": 410,
+        "compania": "Crash",
+        "portada": "imagenes/portadas/8f176febef7ebbe86f26a178a93bab01794363720347fec17f2b40de073c1c3a.jpg",
+        "fecha_publicacion": "2017-06-30"
+    },
+    {
+        "id": "a0a9fdba-ae5e-46bb-bf67-2d45fe485ad4",
+        "nombre": "Dragon Ball: Sparking! Zero",
+        "precio": 69.99,
+        "cantidad": 1200,
+        "compania": "Dragon Ball",
+        "portada": "imagenes/portadas/b5031d0acd1144448d5fa335d4e44ff1e44fd4c12d686bdf9661641a0abe7625.jpg",
+        "fecha_publicacion": "2024-10-11"
+    }
+]
