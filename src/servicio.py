@@ -195,3 +195,35 @@ def descargar_tabla_indices_como_json() -> Dict[str, Any]:
         return {"ok": False, "error": f"Error al preparar descarga de índices: {str(e)}"}
     
 
+def obtener_tabla_hash_visual() -> Dict[str, Any]:
+    """Obtiene la tabla hash en formato visual (solo posiciones e IDs)"""
+    try:
+        tabla_visual = repositorio.obtener_tabla_hash_visual()
+        return {
+            "ok": True, 
+            "tabla_hash": tabla_visual,
+            "mensaje": "Tabla hash obtenida (solo posiciones e IDs)"
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+def obtener_estadisticas_indice() -> Dict[str, Any]:
+    """Obtiene estadísticas del índice hash"""
+    try:
+        stats = repositorio.obtener_estadisticas_tabla_hash()
+        return {"ok": True, "estadisticas": stats}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    
+#metodo para poder ver la tabla
+def obtener_tabla_hash_visual() -> Dict[str, Any]:
+    """Obtiene la tabla hash en formato visual (solo posiciones e IDs)"""
+    try:
+        tabla_visual = repositorio.obtener_tabla_hash_visual()
+        return {
+            "ok": True, 
+            "tabla_hash": tabla_visual,
+            "mensaje": "Tabla hash obtenida (posiciones y IDs)"
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
