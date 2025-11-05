@@ -6,14 +6,16 @@ from typing import Any, Dict, Optional
 
 class NodoHash:
     """Nodo para la lista simplemente enlazada - guarda ID y posición en inventario"""
+
     def __init__(self, id_juego: str, posicion_inventario: int):
         self.id_juego = id_juego
         self.posicion_inventario = posicion_inventario  # ← NUEVO: posición en la lista
-        self.siguiente: Optional['NodoHash'] = None
+        self.siguiente: Optional["NodoHash"] = None
+
 
 class TablaHash:
     """Tabla hash que funciona como índice principal (id -> posición)"""
-    
+
     def __init__(self, tamano: int = 100, archivo_indice: str = "tabla_hash.json"):
         BASE_DIR = Path(__file__).parent.parent.parent
         self.archivo_indice = BASE_DIR / archivo_indice
@@ -23,10 +25,10 @@ class TablaHash:
 
     def funcion_hash(self, id_juego: str) -> int:
         """Función hash personalizada que usa los números del ID"""
-        numeros = ''.join(filter(str.isdigit, id_juego))
+        numeros = "".join(filter(str.isdigit, id_juego))
         if not numeros:
             numeros = "0"
-        
+
         numero_hash = sum(int(digit) * (i + 1) for i, digit in enumerate(numeros))
         return numero_hash % self.tamano
 
@@ -34,7 +36,7 @@ class TablaHash:
         """Agrega un ID con su posición en el inventario"""
         indice = self.funcion_hash(id_juego)
         nuevo_nodo = NodoHash(id_juego, posicion_inventario)
-        
+
         if self.tabla[indice] is None:
             self.tabla[indice] = nuevo_nodo
         else:
@@ -49,10 +51,12 @@ class TablaHash:
         """Busca la posición en el inventario para un ID"""
         indice = self.funcion_hash(id_juego)
         actual = self.tabla[indice]
-        
+
         while actual is not None:
             if actual.id_juego == id_juego:
-                return actual.posicion_inventario  # ← Devuelve la posición en inventario
+                return (
+                    actual.posicion_inventario
+                )  # ← Devuelve la posición en inventario
             actual = actual.siguiente
 
         return None
@@ -66,7 +70,7 @@ class TablaHash:
         indice = self.funcion_hash(id_juego)
         actual = self.tabla[indice]
         anterior = None
-        
+
         while actual is not None:
             if actual.id_juego == id_juego:
                 if anterior is None:
@@ -79,21 +83,21 @@ class TablaHash:
 
             anterior = actual
             actual = actual.siguiente
-        
+
         return False
 
     def actualizar_posicion(self, id_juego: str, nueva_posicion: int):
         """Actualiza la posición de un ID en el inventario"""
         indice = self.funcion_hash(id_juego)
         actual = self.tabla[indice]
-        
+
         while actual is not None:
             if actual.id_juego == id_juego:
                 actual.posicion_inventario = nueva_posicion
                 self.guardar_tabla()
                 return True
             actual = actual.siguiente
-        
+
         return False
 
     def guardar_tabla(self):
@@ -105,23 +109,24 @@ class TablaHash:
             actual = nodo
 
             while actual is not None:
-                lista_posicion.append({
-                    'id_juego': actual.id_juego,
-                    'posicion_inventario': actual.posicion_inventario  # ← Guarda posición
-                })
+                lista_posicion.append(
+                    {
+                        "id_juego": actual.id_juego,
+                        "posicion_inventario": actual.posicion_inventario,  # ← Guarda posición
+                    }
+                )
                 actual = actual.siguiente
-            
+
             if lista_posicion:
-                datos_serializables.append({
-                    'indice': i,
-                    'elementos': lista_posicion
-                })
-        
-        with open(self.archivo_indice, 'w', encoding='utf-8') as f:
-            json.dump({
-                'tamano': self.tamano,
-                'datos': datos_serializables
-            }, f, indent=4, ensure_ascii=False)
+                datos_serializables.append({"indice": i, "elementos": lista_posicion})
+
+        with open(self.archivo_indice, "w", encoding="utf-8") as f:
+            json.dump(
+                {"tamano": self.tamano, "datos": datos_serializables},
+                f,
+                indent=4,
+                ensure_ascii=False,
+            )
 
     def cargar_tabla(self):
         """Carga la tabla hash desde disco"""
@@ -131,28 +136,27 @@ class TablaHash:
         try:
             with open(self.archivo_indice, "r", encoding="utf-8") as f:
                 datos = json.load(f)
-            
-            for posicion in datos['datos']:
-                indice = posicion['indice']
-                elementos = posicion['elementos']
-                
+
+            for posicion in datos["datos"]:
+                indice = posicion["indice"]
+                elementos = posicion["elementos"]
+
                 if elementos:
                     primer_elemento = elementos[0]
                     self.tabla[indice] = NodoHash(
-                        primer_elemento['id_juego'], 
-                        primer_elemento['posicion_inventario']
+                        primer_elemento["id_juego"],
+                        primer_elemento["posicion_inventario"],
                     )
-                    
+
                     actual = self.tabla[indice]
                     for elemento in elementos[1:]:
                         actual.siguiente = NodoHash(
-                            elemento['id_juego'], 
-                            elemento['posicion_inventario']
+                            elemento["id_juego"], elemento["posicion_inventario"]
                         )
                         actual = actual.siguiente
-            
+
             print("✓ Tabla hash de índices cargada correctamente")
-                            
+
         except (json.JSONDecodeError, KeyError, IndexError) as e:
             print(f"Error cargando tabla hash: {e}")
             self.tabla = [None] * self.tamano
@@ -160,18 +164,18 @@ class TablaHash:
     def obtener_tabla_visual(self) -> Dict[int, list]:
         """Obtiene la tabla hash en formato visual"""
         tabla_visual = {}
-        
+
         for i in range(self.tamano):
             elementos = []
             actual = self.tabla[i]
-            
+
             while actual is not None:
                 elementos.append(f"{actual.id_juego}->pos{actual.posicion_inventario}")
                 actual = actual.siguiente
-            
+
             if elementos:
                 tabla_visual[i] = elementos
-        
+
         return tabla_visual
 
     def estadisticas(self) -> Dict[str, Any]:
@@ -197,11 +201,13 @@ class TablaHash:
         factor_carga = total_elementos / self.tamano if self.tamano > 0 else 0
 
         return {
-            'total_elementos': total_elementos,
-            'colisiones': colisiones,
-            'factor_carga': factor_carga,
-            'longitud_maxima': max(lista_longitudes) if lista_longitudes else 0,
-            'longitud_promedio': sum(lista_longitudes) / len(lista_longitudes) if lista_longitudes else 0,
-            'posiciones_ocupadas': len(lista_longitudes),
-            'tabla_visual': self.obtener_tabla_visual()
+            "total_elementos": total_elementos,
+            "colisiones": colisiones,
+            "factor_carga": factor_carga,
+            "longitud_maxima": max(lista_longitudes) if lista_longitudes else 0,
+            "longitud_promedio": (
+                sum(lista_longitudes) / len(lista_longitudes) if lista_longitudes else 0
+            ),
+            "posiciones_ocupadas": len(lista_longitudes),
+            "tabla_visual": self.obtener_tabla_visual(),
         }

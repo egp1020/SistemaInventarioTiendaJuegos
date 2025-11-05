@@ -1,8 +1,8 @@
 from typing import Any, Dict
 
-import repositorio
-from modelos import Videojuego
-from servicio_imagenes import servicio_imagenes
+from src import repositorio
+from src.modelos import Videojuego
+from src.servicio_imagenes import servicio_imagenes
 
 servicio_img = servicio_imagenes()
 
@@ -198,20 +198,24 @@ def descargar_tabla_indices_como_json() -> Dict[str, Any]:
         resultado = repositorio.descargar_tabla_indices()
         return resultado
     except Exception as e:
-        return {"ok": False, "error": f"Error al preparar descarga de índices: {str(e)}"}
-    
+        return {
+            "ok": False,
+            "error": f"Error al preparar descarga de índices: {str(e)}",
+        }
+
 
 def obtener_tabla_hash_visual() -> Dict[str, Any]:
     """Obtiene la tabla hash en formato visual (solo posiciones e IDs)"""
     try:
         tabla_visual = repositorio.obtener_tabla_hash_visual()
         return {
-            "ok": True, 
+            "ok": True,
             "tabla_hash": tabla_visual,
-            "mensaje": "Tabla hash obtenida (solo posiciones e IDs)"
+            "mensaje": "Tabla hash obtenida (solo posiciones e IDs)",
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
 
 def obtener_estadisticas_indice() -> Dict[str, Any]:
     """Obtiene estadísticas del índice hash"""
@@ -220,16 +224,17 @@ def obtener_estadisticas_indice() -> Dict[str, Any]:
         return {"ok": True, "estadisticas": stats}
     except Exception as e:
         return {"ok": False, "error": str(e)}
-    
-#metodo para poder ver la tabla
+
+
+# metodo para poder ver la tabla
 def obtener_tabla_hash_visual() -> Dict[str, Any]:
     """Obtiene la tabla hash en formato visual (solo posiciones e IDs)"""
     try:
         tabla_visual = repositorio.obtener_tabla_hash_visual()
         return {
-            "ok": True, 
+            "ok": True,
             "tabla_hash": tabla_visual,
-            "mensaje": "Tabla hash obtenida (posiciones y IDs)"
+            "mensaje": "Tabla hash obtenida (posiciones y IDs)",
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
