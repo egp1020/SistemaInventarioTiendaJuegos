@@ -6,3 +6,5 @@ pathlib
 dataclasses
 uuid
 datetime
+pre-commit
+isort

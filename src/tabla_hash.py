@@ -1,24 +1,28 @@
 import json
 import os
-from pathlib import Path
 from typing import Any, Dict, Optional
+
+from .config import RUTA_TABLA_HASH
 
 
 class NodoHash:
-    """Nodo para la lista simplemente enlazada - guarda ID y posición en inventario"""
+    """Nodo para la lista simplemente enlazada
+
+    Guarda ID y posición en inventario
+    """
 
     def __init__(self, id_juego: str, posicion_inventario: int):
         self.id_juego = id_juego
-        self.posicion_inventario = posicion_inventario  # ← NUEVO: posición en la lista
+        # Posición en la lista de inventario
+        self.posicion_inventario = posicion_inventario
         self.siguiente: Optional["NodoHash"] = None
 
 
 class TablaHash:
     """Tabla hash que funciona como índice principal (id -> posición)"""
 
-    def __init__(self, tamano: int = 100, archivo_indice: str = "tabla_hash.json"):
-        BASE_DIR = Path(__file__).parent.parent
-        self.archivo_indice = BASE_DIR / archivo_indice
+    def __init__(self, tamano: int = 100):
+        self.archivo_indice = RUTA_TABLA_HASH
         self.tamano = tamano
         self.tabla: list[Optional[NodoHash]] = [None] * tamano
         self.cargar_tabla()
@@ -112,7 +116,8 @@ class TablaHash:
                 lista_posicion.append(
                     {
                         "id_juego": actual.id_juego,
-                        "posicion_inventario": actual.posicion_inventario,  # ← Guarda posición
+                        # Guarda la posición en el inventario
+                        "posicion_inventario": actual.posicion_inventario,
                     }
                 )
                 actual = actual.siguiente
@@ -151,7 +156,8 @@ class TablaHash:
                     actual = self.tabla[indice]
                     for elemento in elementos[1:]:
                         actual.siguiente = NodoHash(
-                            elemento["id_juego"], elemento["posicion_inventario"]
+                            elemento["id_juego"],
+                            elemento["posicion_inventario"],
                         )
                         actual = actual.siguiente
 
@@ -204,7 +210,7 @@ class TablaHash:
             "total_elementos": total_elementos,
             "colisiones": colisiones,
             "factor_carga": factor_carga,
-            "longitud_maxima": max(lista_longitudes) if lista_longitudes else 0,
+            "longitud_maxima": (max(lista_longitudes) if lista_longitudes else 0),
             "longitud_promedio": (
                 sum(lista_longitudes) / len(lista_longitudes) if lista_longitudes else 0
             ),
