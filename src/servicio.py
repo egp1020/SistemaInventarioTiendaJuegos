@@ -1,8 +1,9 @@
 from typing import Any, Dict
 
 from . import repositorio
-from modelos import Videojuego
-from servicio_imagenes import servicio_imagenes
+
+from .modelos import Videojuego
+from .servicio_imagenes import servicio_imagenes
 
 servicio_img = servicio_imagenes()
 
