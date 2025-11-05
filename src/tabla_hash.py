@@ -17,7 +17,7 @@ class TablaHash:
     """Tabla hash que funciona como índice principal (id -> posición)"""
 
     def __init__(self, tamano: int = 100, archivo_indice: str = "tabla_hash.json"):
-        BASE_DIR = Path(__file__).parent.parent.parent
+        BASE_DIR = Path(__file__).parent.parent
         self.archivo_indice = BASE_DIR / archivo_indice
         self.tamano = tamano
         self.tabla: list[Optional[NodoHash]] = [None] * tamano

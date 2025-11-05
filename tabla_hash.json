@@ -1,0 +1,41 @@
+{
+    "tamano": 100,
+    "datos": [
+        {
+            "indice": 10,
+            "elementos": [
+                {
+                    "id_juego": "1a6bf391-2983-49bd-aab1-d341df7832a9",
+                    "posicion_inventario": 2
+                }
+            ]
+        },
+        {
+            "indice": 34,
+            "elementos": [
+                {
+                    "id_juego": "5e72f968-489f-478c-8fed-d42e4fe99494",
+                    "posicion_inventario": 0
+                }
+            ]
+        },
+        {
+            "indice": 44,
+            "elementos": [
+                {
+                    "id_juego": "19e93d5f-62f5-4784-aa5d-ef6132735e86",
+                    "posicion_inventario": 1
+                }
+            ]
+        },
+        {
+            "indice": 98,
+            "elementos": [
+                {
+                    "id_juego": "2e82c0ac-0e74-4ec4-a0cc-64c14ad6fc73",
+                    "posicion_inventario": 3
+                }
+            ]
+        }
+    ]
+}
