@@ -7,7 +7,7 @@ from typing import Any, Dict
 
 from src.tabla_hash import TablaHash
 
-BASE_DIR = Path(__file__).parent.parent.parent
+BASE_DIR = Path(__file__).parent.parent
 ruta_archivo = BASE_DIR / "inventario.json"
 tabla_hash = TablaHash(tamano=100)
 
@@ -31,33 +31,118 @@ def guardar_inventario(inventario):
         json.dump(inventario, f, indent=4, ensure_ascii=False)
 
 
+# se modifico el codigo de agregar
 def agregar_juego(juego):
     inventario = obtener_inventario()
+
+    # Agregar al final de la lista
+    posicion = len(inventario)  # Posición donde se insertará
     inventario.append(juego)
     guardar_inventario(inventario)
-    # Agregar a la tabla hash para búsquedas rápidas
-    tabla_hash.agregar(juego["id"], juego)
+
+    # Agregar a la tabla hash con la posición
+    tabla_hash.agregar(juego["id"], posicion)
 
 
+# se modifico
 def buscar_por_id(id):
-    # Usar la tabla hash para búsqueda O(1) en promedio
-    return tabla_hash.buscar(id)
+    # Buscar posición en la tabla hash O(1)
+    posicion = tabla_hash.buscar_posicion(id)
 
+    if posicion is None:
+        return None
 
-def eliminar_juego_por_id(id):
-    """Elimina un juego por ID tanto del inventario como de la tabla hash"""
+    # Acceso directo al inventario O(1)
     inventario = obtener_inventario()
 
-    # Eliminar del inventario principal
-    nuevo_inventario = [juego for juego in inventario if juego["id"] != id]
+    if posicion < len(inventario) and inventario[posicion]["id"] == id:
+        return inventario[posicion]
 
-    if len(nuevo_inventario) == len(inventario):
-        return False  # No se encontró el juego
+    # Si hay inconsistencia, buscar linealmente y reconstruir índice
+    return buscar_lineal_y_reconstruir(id)
 
-    guardar_inventario(nuevo_inventario)
 
-    # Eliminar de la tabla hash
-    return tabla_hash.eliminar(id)
+# se modifico
+def eliminar_juego_por_id(id):
+    """Elimina un juego usando la tabla hash como índice"""
+    # Buscar posición usando tabla hash O(1)
+    posicion = tabla_hash.buscar_posicion(id)
+
+    if posicion is None:
+        return False
+
+    inventario = obtener_inventario()
+
+    # Verificar consistencia
+    if posicion >= len(inventario) or inventario[posicion]["id"] != id:
+        return buscar_lineal_y_eliminar(id)
+
+    # ELIMINACIÓN OPTIMIZADA con actualización de índices
+    ultima_posicion = len(inventario) - 1
+
+    if posicion != ultima_posicion:
+        # Intercambiar con el último elemento
+        inventario[posicion], inventario[ultima_posicion] = (
+            inventario[ultima_posicion],
+            inventario[posicion],
+        )
+
+        # Actualizar la posición del elemento movido en la tabla hash
+        id_movido = inventario[posicion]["id"]
+        tabla_hash.actualizar_posicion(id_movido, posicion)
+
+    # Eliminar el último elemento
+    inventario.pop()
+    guardar_inventario(inventario)
+
+    # Eliminar el ID de la tabla hash
+    tabla_hash.eliminar(id)
+
+    return True
+
+
+# se crearon nuevas funciones para buscar linealmente en caso de que haya fallos
+def buscar_lineal_y_reconstruir(id):
+    """Búsqueda lineal y reconstrucción del índice en caso de inconsistencia"""
+    inventario = obtener_inventario()
+
+    for i, juego in enumerate(inventario):
+        if juego["id"] == id:
+            # Reconstruir la posición en la tabla hash
+            tabla_hash.agregar(id, i)
+            return juego
+
+    return None
+
+
+def buscar_lineal_y_eliminar(id):
+    """Eliminación lineal y reconstrucción del índice"""
+    inventario = obtener_inventario()
+
+    for i in range(len(inventario)):
+        if inventario[i]["id"] == id:
+            # Eliminar y actualizar índices para elementos posteriores
+            inventario.pop(i)
+            guardar_inventario(inventario)
+
+            # Reconstruir tabla hash completa
+            reconstruir_tabla_hash_completa()
+            return True
+
+    return False
+
+
+# en caso de que se dañe la tabla hash esta se reconstruye
+
+
+def reconstruir_tabla_hash_completa():
+    """Reconstruye toda la tabla hash desde el inventario"""
+    global tabla_hash
+    tabla_hash = TablaHash(tamano=100)
+
+    inventario = obtener_inventario()
+    for i, juego in enumerate(inventario):
+        tabla_hash.agregar(juego["id"], i)
 
 
 def listar_juegos():
@@ -273,47 +358,48 @@ def cargar_inventario_desde_datos(datos_json: str) -> Dict[str, Any]:
     except Exception as e:
         return {"ok": False, "error": f"Error al cargar el inventario: {str(e)}"}
 
+
 def descargar_tabla_indices(ruta_destino: str = None) -> Dict[str, Any]:
     """
-    Descarga los datos de la tabla hash como JSON
+    Crea una copia del archivo tabla_hash.json (índices) en la ruta especificada
+    o devuelve los datos para descargar
     """
     try:
-        # Obtener todos los datos de la tabla hash
-        datos_tabla = []
-        for i in range(tabla_hash.tamano):
-            actual = tabla_hash.tabla[i]
-            while actual is not None:
-                datos_tabla.append({
-                    'id': actual.id_juego,
-                    'nombre': actual.juego.get('nombre', ''),
-                    'indice_hash': i,
-                    'juego_completo': actual.juego
-                })
-                actual = actual.siguiente
-        
+        archivo_indice = BASE_DIR / "tabla_hash.json"
+
+        if not os.path.exists(archivo_indice):
+            return {"ok": False, "error": "No existe el archivo de índices"}
+
         if ruta_destino:
-            # Guardar en archivo
-            with open(ruta_destino, 'w', encoding='utf-8') as f:
-                json.dump(datos_tabla, f, indent=4, ensure_ascii=False)
+            # Copiar el archivo a la ruta destino
+            shutil.copy2(archivo_indice, ruta_destino)
             return {
                 "ok": True,
                 "mensaje": f"Tabla de índices descargada en {ruta_destino}",
                 "ruta": ruta_destino,
-                "total_elementos": len(datos_tabla)
             }
         else:
-            # Devolver datos
+            # Devolver los datos para descargar
+            with open(archivo_indice, "r", encoding="utf-8") as f:
+                datos = json.load(f)
+
+            # Crear nombre de archivo con timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            nombre_archivo = f"tabla_indices_{timestamp}.json"
-            
+            nombre_archivo = f"tabla_indices_backup_{timestamp}.json"
+
             return {
                 "ok": True,
-                "datos": datos_tabla,
+                "datos": datos,
                 "nombre_archivo": nombre_archivo,
                 "timestamp": timestamp,
-                "total_elementos": len(datos_tabla),
-                "estadisticas": tabla_hash.estadisticas()
+                "tipo": "indices",
             }
-            
+
     except Exception as e:
         return {"ok": False, "error": f"Error al descargar tabla de índices: {str(e)}"}
+
+
+# funcion para ver la tabla hash en consola
+def obtener_tabla_hash_visual():
+    """Obtiene la tabla hash en formato visual (solo posiciones e IDs)"""
+    return tabla_hash.obtener_tabla_visual()

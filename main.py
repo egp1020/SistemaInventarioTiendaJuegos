@@ -145,7 +145,7 @@ with col_u2:
             st.error(resultado["error"])
 
 
-#Mostrar juegos registrados
+# Mostrar juegos registrados
 st.subheader("📋 Videojuegos Disponibles")
 
 col1, col2, col3 = st.columns(3)
@@ -191,7 +191,9 @@ if juegos:
     # Filas de la tabla
     # Filas de la tabla
     for j in juegos:
-        cols = st.columns([1, 1, 2, 1, 1, 2, 2, 1])  # 🟩 agregamos una columna más (botón eliminar)
+        cols = st.columns(
+            [1, 1, 2, 1, 1, 2, 2, 1]
+        )  # 🟩 agregamos una columna más (botón eliminar)
 
         # Portada
         with cols[1]:
@@ -212,12 +214,12 @@ if juegos:
 
         # 🟩 Nuevo: botón eliminar
         with cols[7]:
-        # El botón de la papelera solo establece la ID a confirmar
+            # El botón de la papelera solo establece la ID a confirmar
             if st.button("🗑️", key=f"del_{j['id']}"):
                 st.session_state["confirmar_eliminacion"] = j["id"]
                 # No se necesita rerun aquí, ya que el estado se actualiza.
 else:
-        st.info("No hay videojuegos registrados todavía.")
+    st.info("No hay videojuegos registrados todavía.")
 # ----------------------------------------------------------------------
 # 2. Lógica y UI del Cuadro de Confirmación (Fuera del bucle)
 # ----------------------------------------------------------------------
@@ -227,14 +229,16 @@ if "confirmar_eliminacion" in st.session_state:
     juego = next((x for x in juegos if x["id"] == juego_id), None)
 
     if juego:
-        st.warning(f"⚠️ ¿Seguro que deseas eliminar '{juego['nombre']}' permanentemente?")
-        
+        st.warning(
+            f"⚠️ ¿Seguro que deseas eliminar '{juego['nombre']}' permanentemente?"
+        )
+
         col_c1, col_c2 = st.columns(2)
-        
+
         # Bandera para saber si se ha realizado una acción (eliminar o cancelar)
         accion_realizada = False
         mensaje_accion = None
-        
+
         with col_c1:
             if st.button("✅ Sí, eliminar", key=f"confirmar_{juego_id}"):
                 resultado = servicio.eliminar_juego(juego_id)
@@ -243,7 +247,7 @@ if "confirmar_eliminacion" in st.session_state:
                 else:
                     mensaje_accion = ("error", resultado["error"])
                 accion_realizada = True
-                
+
         with col_c2:
             if st.button("❌ Cancelar", key=f"cancelar_{juego_id}"):
                 mensaje_accion = ("info", "Eliminación cancelada.")
@@ -259,7 +263,7 @@ if "confirmar_eliminacion" in st.session_state:
                 st.error(mensaje)
             elif tipo == "info":
                 st.info(mensaje)
-                
+
             # Limpiar el estado y forzar el re-renderizado SÓLO después de la acción
             del st.session_state["confirmar_eliminacion"]
             st.rerun()
@@ -278,7 +282,9 @@ if estadisticas_hash["ok"]:
     st.write(f"- **Colisiones:** {stats.get('colisiones', 'N/A')}")
     st.write(f"- **Factor de carga:** {stats.get('factor_carga', 'N/A')}")
     st.write(f"- **Longitud máxima de lista:** {stats.get('longitud_maxima', 'N/A')}")
-    st.write(f"- **Longitud promedio de lista:** {stats.get('longitud_promedio', 'N/A')}")
+    st.write(
+        f"- **Longitud promedio de lista:** {stats.get('longitud_promedio', 'N/A')}"
+    )
     st.write(f"- **Posiciones ocupadas:** {stats.get('posiciones_ocupadas', 'N/A')}")
 else:
     st.error(estadisticas_hash["error"])

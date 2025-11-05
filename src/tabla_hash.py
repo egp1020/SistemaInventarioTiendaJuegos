@@ -5,19 +5,18 @@ from typing import Any, Dict, Optional
 
 
 class NodoHash:
-    """Nodo para la lista simplemente enlazada"""
+    """Nodo para la lista simplemente enlazada - guarda ID y posición en inventario"""
 
-    def __init__(self, id_juego: str, juego: Dict[str, Any]):
+    def __init__(self, id_juego: str, posicion_inventario: int):
         self.id_juego = id_juego
-        self.juego = juego
+        self.posicion_inventario = posicion_inventario  # ← NUEVO: posición en la lista
         self.siguiente: Optional["NodoHash"] = None
 
 
 class TablaHash:
-    """Tabla hash con encadenamiento (listas simplemente enlazadas)"""
+    """Tabla hash que funciona como índice principal (id -> posición)"""
 
     def __init__(self, tamano: int = 100, archivo_indice: str = "tabla_hash.json"):
-        # Subir dos carpetas para guardar el índice
         BASE_DIR = Path(__file__).parent.parent.parent
         self.archivo_indice = BASE_DIR / archivo_indice
         self.tamano = tamano
@@ -25,30 +24,22 @@ class TablaHash:
         self.cargar_tabla()
 
     def funcion_hash(self, id_juego: str) -> int:
-        """
-        Función hash personalizada que usa los números del ID
-        """
-        # Extraer todos los números del UUID
+        """Función hash personalizada que usa los números del ID"""
         numeros = "".join(filter(str.isdigit, id_juego))
         if not numeros:
             numeros = "0"
 
-        # Convertir a número y calcular hash
         numero_hash = sum(int(digit) * (i + 1) for i, digit in enumerate(numeros))
-
-        # Aplicar módulo para obtener índice en el vector
         return numero_hash % self.tamano
 
-    def agregar(self, id_juego: str, juego: Dict[str, Any]):
-        """Agrega un juego a la tabla hash"""
+    def agregar(self, id_juego: str, posicion_inventario: int):
+        """Agrega un ID con su posición en el inventario"""
         indice = self.funcion_hash(id_juego)
-        nuevo_nodo = NodoHash(id_juego, juego)
+        nuevo_nodo = NodoHash(id_juego, posicion_inventario)
 
-        # Si la posición está vacía, insertar directamente
         if self.tabla[indice] is None:
             self.tabla[indice] = nuevo_nodo
         else:
-            # Si hay colisión, agregar al final de la lista
             actual = self.tabla[indice]
             while actual.siguiente is not None:
                 actual = actual.siguiente
@@ -56,34 +47,35 @@ class TablaHash:
 
         self.guardar_tabla()
 
-    def buscar(self, id_juego: str) -> Optional[Dict[str, Any]]:
-        """Busca un juego por ID en la tabla hash"""
+    def buscar_posicion(self, id_juego: str) -> Optional[int]:
+        """Busca la posición en el inventario para un ID"""
         indice = self.funcion_hash(id_juego)
         actual = self.tabla[indice]
 
-        # Recorrer la lista enlazada en esa posición
         while actual is not None:
             if actual.id_juego == id_juego:
-                return actual.juego
+                return (
+                    actual.posicion_inventario
+                )  # ← Devuelve la posición en inventario
             actual = actual.siguiente
 
         return None
 
+    def existe(self, id_juego: str) -> bool:
+        """Verifica si un ID existe en la tabla hash"""
+        return self.buscar_posicion(id_juego) is not None
+
     def eliminar(self, id_juego: str) -> bool:
-        """Elimina un juego de la tabla hash"""
+        """Elimina un ID de la tabla hash"""
         indice = self.funcion_hash(id_juego)
         actual = self.tabla[indice]
         anterior = None
 
-        # Buscar el nodo a eliminar
         while actual is not None:
             if actual.id_juego == id_juego:
-                # Eliminar el nodo
                 if anterior is None:
-                    # Es el primer nodo de la lista
                     self.tabla[indice] = actual.siguiente
                 else:
-                    # Es un nodo intermedio o final
                     anterior.siguiente = actual.siguiente
 
                 self.guardar_tabla()
@@ -94,8 +86,22 @@ class TablaHash:
 
         return False
 
+    def actualizar_posicion(self, id_juego: str, nueva_posicion: int):
+        """Actualiza la posición de un ID en el inventario"""
+        indice = self.funcion_hash(id_juego)
+        actual = self.tabla[indice]
+
+        while actual is not None:
+            if actual.id_juego == id_juego:
+                actual.posicion_inventario = nueva_posicion
+                self.guardar_tabla()
+                return True
+            actual = actual.siguiente
+
+        return False
+
     def guardar_tabla(self):
-        """Convierte la tabla hash a formato serializable y guarda en disco"""
+        """Guarda la tabla hash con IDs y posiciones"""
         datos_serializables = []
 
         for i, nodo in enumerate(self.tabla):
@@ -104,11 +110,14 @@ class TablaHash:
 
             while actual is not None:
                 lista_posicion.append(
-                    {"id_juego": actual.id_juego, "juego": actual.juego}
+                    {
+                        "id_juego": actual.id_juego,
+                        "posicion_inventario": actual.posicion_inventario,  # ← Guarda posición
+                    }
                 )
                 actual = actual.siguiente
 
-            if lista_posicion:  # Solo guardar posiciones no vacías
+            if lista_posicion:
                 datos_serializables.append({"indice": i, "elementos": lista_posicion})
 
         with open(self.archivo_indice, "w", encoding="utf-8") as f:
@@ -128,31 +137,46 @@ class TablaHash:
             with open(self.archivo_indice, "r", encoding="utf-8") as f:
                 datos = json.load(f)
 
-            # Reconstruir la tabla desde los datos serializados
             for posicion in datos["datos"]:
                 indice = posicion["indice"]
                 elementos = posicion["elementos"]
 
-                # Reconstruir la lista enlazada para esta posición
                 if elementos:
-                    # Crear el primer nodo
                     primer_elemento = elementos[0]
                     self.tabla[indice] = NodoHash(
-                        primer_elemento["id_juego"], primer_elemento["juego"]
+                        primer_elemento["id_juego"],
+                        primer_elemento["posicion_inventario"],
                     )
 
-                    # Agregar los nodos siguientes
                     actual = self.tabla[indice]
                     for elemento in elementos[1:]:
                         actual.siguiente = NodoHash(
-                            elemento["id_juego"], elemento["juego"]
+                            elemento["id_juego"], elemento["posicion_inventario"]
                         )
                         actual = actual.siguiente
 
+            print("✓ Tabla hash de índices cargada correctamente")
+
         except (json.JSONDecodeError, KeyError, IndexError) as e:
             print(f"Error cargando tabla hash: {e}")
-            # Si hay error, empezar con tabla vacía
             self.tabla = [None] * self.tamano
+
+    def obtener_tabla_visual(self) -> Dict[int, list]:
+        """Obtiene la tabla hash en formato visual"""
+        tabla_visual = {}
+
+        for i in range(self.tamano):
+            elementos = []
+            actual = self.tabla[i]
+
+            while actual is not None:
+                elementos.append(f"{actual.id_juego}->pos{actual.posicion_inventario}")
+                actual = actual.siguiente
+
+            if elementos:
+                tabla_visual[i] = elementos
+
+        return tabla_visual
 
     def estadisticas(self) -> Dict[str, Any]:
         """Muestra estadísticas de la tabla hash"""
@@ -185,4 +209,5 @@ class TablaHash:
                 sum(lista_longitudes) / len(lista_longitudes) if lista_longitudes else 0
             ),
             "posiciones_ocupadas": len(lista_longitudes),
+            "tabla_visual": self.obtener_tabla_visual(),
         }
