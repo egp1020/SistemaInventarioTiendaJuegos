@@ -2,13 +2,12 @@ import json
 import os
 import shutil
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict
 
-from src.tabla_hash import TablaHash
+from .config import RUTA_INVENTARIO, BASE_DIR
+from .tabla_hash import TablaHash
 
-BASE_DIR = Path(__file__).parent.parent
-ruta_archivo = BASE_DIR / "inventario.json"
+ruta_archivo = RUTA_INVENTARIO
 tabla_hash = TablaHash(tamano=100)
 
 
@@ -101,7 +100,8 @@ def eliminar_juego_por_id(id):
     return True
 
 
-# se crearon nuevas funciones para buscar linealmente en caso de que haya fallos
+# se crearon nuevas funciones para buscar linealmente en caso de que haya
+# fallos
 def buscar_lineal_y_reconstruir(id):
     """Búsqueda lineal y reconstrucción del índice en caso de inconsistencia"""
     inventario = obtener_inventario()
@@ -361,8 +361,8 @@ def cargar_inventario_desde_datos(datos_json: str) -> Dict[str, Any]:
 
 def descargar_tabla_indices(ruta_destino: str = None) -> Dict[str, Any]:
     """
-    Crea una copia del archivo tabla_hash.json (índices) en la ruta especificada
-    o devuelve los datos para descargar
+    Crea una copia del archivo tabla_hash.json (índices)
+    en la ruta especificada o devuelve los datos para descargar
     """
     try:
         archivo_indice = BASE_DIR / "tabla_hash.json"

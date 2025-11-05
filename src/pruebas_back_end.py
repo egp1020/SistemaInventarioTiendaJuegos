@@ -1,23 +1,17 @@
 # archivo: src/pruebas_tabla_hash_index.py
 import os
+import sys
 from io import BytesIO
-from pathlib import Path
 
-from repositorio import obtener_inventario
-
-# Agregar el directorio actual al path para imports
-sys.path.append(str(Path(__file__).parent))
-
-from servicio import (
+from .config import RUTA_INVENTARIO, RUTA_TABLA_HASH
+from .repositorio import obtener_inventario, tabla_hash
+from .servicio import (
     agregar_videojuego,
     buscar_por_Id,
     eliminar_juego,
-    listar_juegos,
-    obtener_tabla_hash_visual,
     obtener_estadisticas_indice,
+    obtener_tabla_hash_visual,
 )
-from repositorio import obtener_inventario, tabla_hash
-import repositorio
 
 
 def crear_imagen_falsa(nombre_archivo="portada_test.jpg"):
@@ -32,12 +26,9 @@ def crear_imagen_falsa(nombre_archivo="portada_test.jpg"):
 def limpiar_inventario():
     """Limpia el inventario y la tabla hash para pruebas limpias"""
     try:
-        ruta_archivo = Path(__file__).parent.parent / "inventario.json"
-        if ruta_archivo.exists():
-            os.remove(ruta_archivo)
-        ruta_indice = Path(__file__).parent.parent / "tabla_hash.json"
-        if ruta_indice.exists():
-            os.remove(ruta_indice)
+        for ruta in [RUTA_INVENTARIO, RUTA_TABLA_HASH]:
+            if ruta.exists():
+                os.remove(ruta)
         print("✅ Inventario y tabla hash limpiados")
     except Exception as e:
         print(f"⚠️  Advertencia al limpiar: {e}")
@@ -90,7 +81,7 @@ def test_agregar_y_buscar():
     assert juego_encontrado["precio"] == juego_prueba["precio"]
     assert juego_encontrado["cantidad"] == juego_prueba["cantidad"]
     assert juego_encontrado["compania"] == juego_prueba["compania"]
-    assert juego_encontrado["fecha_publicacion"] == juego_prueba["fecha_publicacion"]
+    assert juego_encontrado["fecha_publicacion"] == (juego_prueba["fecha_publicacion"])
 
     print("✅ Búsqueda por ID exitosa - Datos correctos")
     return True
@@ -180,7 +171,8 @@ def test_eliminacion_eficiente():
     )
 
     if not resultado_agregar["ok"]:
-        print(f"❌ Error al agregar juego para eliminar: {resultado_agregar['error']}")
+        error_msg = resultado_agregar["error"]
+        print(f"❌ Error al agregar juego para eliminar: {error_msg}")
         return False
 
     id_eliminar = resultado_agregar["id"]
@@ -219,7 +211,7 @@ def test_estadisticas_tabla_hash():
     resultado_estadisticas = obtener_estadisticas_indice()
 
     if not resultado_estadisticas["ok"]:
-        print(f"❌ Error obteniendo estadísticas: {resultado_estadisticas['error']}")
+        print("❌ Error obteniendo estadísticas: " f"{resultado_estadisticas['error']}")
         return False
 
     stats = resultado_estadisticas["estadisticas"]
@@ -257,7 +249,8 @@ def test_tabla_hash_visual():
     if tabla_visual:
         for posicion, elementos in tabla_visual.items():
             print(f"   Posición {posicion}: {len(elementos)} elementos")
-            for elemento in elementos[:2]:  # Mostrar solo 2 elementos por posición
+            # Mostrar solo 2 elementos por posición
+            for elemento in elementos[:2]:
                 print(f"     - {elemento}")
             if len(elementos) > 2:
                 print(f"     ... y {len(elementos) - 2} más")
@@ -279,7 +272,8 @@ def test_consistencia_indices():
     # Verificar que el número de elementos coincide
     if len(inventario) != stats["total_elementos"]:
         print(
-            f"❌ Inconsistencia: inventario tiene {len(inventario)}, tabla hash tiene {stats['total_elementos']}"
+            f"❌ Inconsistencia: inventario tiene {len(inventario)}, "
+            f"tabla hash tiene {stats['total_elementos']}"
         )
         return False
 
@@ -329,7 +323,7 @@ def ejecutar_todas_las_pruebas():
 
     if pruebas_pasadas == total_pruebas:
         print("🎉 ¡TODAS LAS PRUEBAS PASARON EXITOSAMENTE!")
-        print("   El sistema de índices con tabla hash funciona correctamente 🚀")
+        print("El sistema de índices con tabla hash funciona correctamente.")
     else:
         print("⚠️  Algunas pruebas fallaron - revisar el sistema")
 

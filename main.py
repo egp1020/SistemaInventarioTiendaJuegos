@@ -1,12 +1,11 @@
+import json
 from datetime import date
 from pathlib import Path
-import json
 
 import streamlit as st
 
 from src import repositorio, servicio
 from src.servicio_imagenes import servicio_imagenes
-import base64
 
 ruta_base = Path(__file__).resolve().parent
 
@@ -62,7 +61,6 @@ with st.form("formulario_juego", clear_on_submit=False):
         st.image(portada, width=150, caption="Vista previa de portada")
 
     submit = st.form_submit_button("💾 Guardar")
-
 
 if submit:
     nombre_val = nombre.strip()
@@ -182,13 +180,13 @@ elif busqueda_compania:
 
 if juegos:
     # Encabezados de la tabla
-    cols = st.columns([1, 1, 2, 1, 1, 2, 2, 1])  # Ajusta proporciones a tu gusto
+    # Ajusta proporciones a tu gusto
+    cols = st.columns([1, 1, 2, 1, 1, 2, 2, 1])
     headers = ["ID", "Portada", "Nombre", "Precio", "Stock", "Compañía", "Fecha"]
 
     for col, header in zip(cols, headers):
         col.markdown(f"**{header}**")
 
-    # Filas de la tabla
     # Filas de la tabla
     for j in juegos:
         cols = st.columns(
@@ -220,6 +218,7 @@ if juegos:
                 # No se necesita rerun aquí, ya que el estado se actualiza.
 else:
     st.info("No hay videojuegos registrados todavía.")
+
 # ----------------------------------------------------------------------
 # 2. Lógica y UI del Cuadro de Confirmación (Fuera del bucle)
 # ----------------------------------------------------------------------
@@ -230,12 +229,13 @@ if "confirmar_eliminacion" in st.session_state:
 
     if juego:
         st.warning(
-            f"⚠️ ¿Seguro que deseas eliminar '{juego['nombre']}' permanentemente?"
+            "⚠️ ¿Seguro que deseas eliminar " f"'{juego['nombre']}' permanentemente?"
         )
 
         col_c1, col_c2 = st.columns(2)
 
-        # Bandera para saber si se ha realizado una acción (eliminar o cancelar)
+        # Bandera para saber si se ha realizado una acción (eliminar o
+        # cancelar)
         accion_realizada = False
         mensaje_accion = None
 
@@ -253,7 +253,8 @@ if "confirmar_eliminacion" in st.session_state:
                 mensaje_accion = ("info", "Eliminación cancelada.")
                 accion_realizada = True
 
-        # Manejar el resultado de la acción después de que los botones hayan sido procesados
+        # Manejar el resultado de la acción después de que los botones hayan
+        # sido procesados
         if accion_realizada:
             # Mostrar el mensaje
             tipo, mensaje = mensaje_accion
@@ -264,7 +265,8 @@ if "confirmar_eliminacion" in st.session_state:
             elif tipo == "info":
                 st.info(mensaje)
 
-            # Limpiar el estado y forzar el re-renderizado SÓLO después de la acción
+            # Limpiar el estado y forzar el re-renderizado SÓLO después de la
+            # acción
             del st.session_state["confirmar_eliminacion"]
             st.rerun()
 
@@ -277,15 +279,15 @@ estadisticas_hash = servicio.obtener_estadisticas_indice()
 if estadisticas_hash["ok"]:
     stats = estadisticas_hash["estadisticas"]
     st.markdown("### 🧩 Estadísticas de la tabla hash")
-    st.write(f"- **Tamaño de la tabla:** {stats.get('tamano', 'N/A')}")
-    st.write(f"- **Elementos almacenados:** {stats.get('total_elementos', 'N/A')}")
-    st.write(f"- **Colisiones:** {stats.get('colisiones', 'N/A')}")
-    st.write(f"- **Factor de carga:** {stats.get('factor_carga', 'N/A')}")
-    st.write(f"- **Longitud máxima de lista:** {stats.get('longitud_maxima', 'N/A')}")
+    st.write("- **Tamaño de la tabla: " f"{stats.get('tamano', 'N/A')}")
+    st.write("- **Elementos almacenados: " f"{stats.get('total_elementos', 'N/A')}")
+    st.write("- **Colisiones: " f"{stats.get('colisiones', 'N/A')}")
+    st.write("- **Factor de carga: " f"{stats.get('factor_carga', 'N/A')}")
+    st.write("- **Longitud máxima de lista: " f"{stats.get('longitud_maxima', 'N/A')}")
     st.write(
-        f"- **Longitud promedio de lista:** {stats.get('longitud_promedio', 'N/A')}"
+        f"- **Longitud promedio de lista:** " f"{stats.get('longitud_promedio', 'N/A')}"
     )
-    st.write(f"- **Posiciones ocupadas:** {stats.get('posiciones_ocupadas', 'N/A')}")
+    st.write("- **Posiciones ocupadas: " f"{stats.get('posiciones_ocupadas', 'N/A')}")
 else:
     st.error(estadisticas_hash["error"])
 

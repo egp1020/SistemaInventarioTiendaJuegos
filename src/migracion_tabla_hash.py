@@ -1,4 +1,4 @@
-from src.repositorio import obtener_inventario, tabla_hash
+from .repositorio import obtener_inventario, tabla_hash
 
 
 def migrar_a_tabla_hash():
