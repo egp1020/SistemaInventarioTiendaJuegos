@@ -1,14 +1,17 @@
 import hashlib
 import os
-from pathlib import Path
+
+from .config import CARPETA_PORTADAS, RUTA_RELATIVA_PORTADAS
 
 
 class servicio_imagenes:
-    def __init__(self, carpeta_base="imagenes/portadas"):
-        # Subir dos carpetas para la carpeta de imágenes
-        BASE_DIR = Path(__file__).parent.parent.parent
-        self.carpeta_portadas = BASE_DIR / carpeta_base
-        self.carpeta_portadas.mkdir(parents=True, exist_ok=True)
+    """
+    Servicio para guardar imágenes en disco y evitar duplicados usando hash.
+    """
+
+    def __init__(self):
+        CARPETA_PORTADAS.mkdir(parents=True, exist_ok=True)
+        self.carpeta_portadas = CARPETA_PORTADAS
 
     def guardar_imagen(self, archivo_imagen, nombre_original):
         """
@@ -16,7 +19,6 @@ class servicio_imagenes:
         Si la imagen ya existe (mismo contenido), no la duplica.
         Retorna la ruta relativa que se debe guardar en el JSON.
         """
-
         # Leer contenido en bytes
         if hasattr(archivo_imagen, "getvalue"):
             contenido = archivo_imagen.getvalue()
@@ -25,7 +27,6 @@ class servicio_imagenes:
 
         # Calcular hash SHA256
         hash_archivo = hashlib.sha256(contenido).hexdigest()
-
         # Mantener extensión original
         extension = os.path.splitext(nombre_original)[1].lower()
         nombre_unico = f"{hash_archivo}{extension}"
@@ -37,5 +38,5 @@ class servicio_imagenes:
             with open(ruta_guardado, "wb") as f:
                 f.write(contenido)
 
-        # Retornar ruta relativa para guardar en JSON
-        return f"imagenes/portadas/{nombre_unico}"
+        # Retornar ruta relativa homogénea (la definida en config)
+        return f"{RUTA_RELATIVA_PORTADAS}/{nombre_unico}"

@@ -1,8 +1,9 @@
 from typing import Any, Dict
 
-import repositorio
-from modelos import Videojuego
-from servicio_imagenes import servicio_imagenes
+from . import repositorio
+
+from .modelos import Videojuego
+from .servicio_imagenes import servicio_imagenes
 
 servicio_img = servicio_imagenes()
 
@@ -107,15 +108,6 @@ def eliminar_juego(id):
         return {"ok": False, "error": f"No existe un videojuego con ID {id}"}
 
 
-def obtener_estadisticas_indice():
-    """Obtiene estadísticas del índice hash"""
-    try:
-        stats = repositorio.obtener_estadisticas_tabla_hash()
-        return {"ok": True, "estadisticas": stats}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
 def descargar_inventario_como_json() -> Dict[str, Any]:
     """
     Prepara los datos del inventario para descargar como archivo JSON
@@ -202,3 +194,25 @@ def descargar_tabla_indices_como_json() -> Dict[str, Any]:
             "ok": False,
             "error": f"Error al preparar descarga de índices: {str(e)}",
         }
+
+
+def obtener_estadisticas_indice() -> Dict[str, Any]:
+    """Obtiene estadísticas del índice hash"""
+    try:
+        stats = repositorio.obtener_estadisticas_tabla_hash()
+        return {"ok": True, "estadisticas": stats}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+
+def obtener_tabla_hash_visual() -> Dict[str, Any]:
+    """Obtiene la tabla hash en formato visual (posiciones e IDs)"""
+    try:
+        tabla_visual = repositorio.obtener_tabla_hash_visual()
+        return {
+            "ok": True,
+            "tabla_hash": tabla_visual,
+            "mensaje": "Tabla hash obtenida (posiciones y IDs)",
+        }
+    except Exception as e:
+        return {"ok": False, "error": str(e)}

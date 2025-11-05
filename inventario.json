@@ -1,0 +1,38 @@
+[
+    {
+        "id": "5e72f968-489f-478c-8fed-d42e4fe99494",
+        "nombre": "Crash Bandicoot: N. Sane Trilogy",
+        "precio": 39.99,
+        "cantidad": 410,
+        "compania": "Activision",
+        "portada": "imagenes/portadas/093458a8443b488597d0169b97a5b9633137e0cdc793ee854cdc1cd6c64d1947.jpeg",
+        "fecha_publicacion": "2017-06-30"
+    },
+    {
+        "id": "19e93d5f-62f5-4784-aa5d-ef6132735e86",
+        "nombre": "Dragon Ball: Sparking! Zero",
+        "precio": 69.99,
+        "cantidad": 1200,
+        "compania": "Spike Chunsoft",
+        "portada": "imagenes/portadas/aa12d701c2f2c0ed03beedf264e9b73e63989a6d868af11e5a90903672ff6f43.jpg",
+        "fecha_publicacion": "2024-10-07"
+    },
+    {
+        "id": "1a6bf391-2983-49bd-aab1-d341df7832a9",
+        "nombre": "Hallow Knight",
+        "precio": 14.99,
+        "cantidad": 50,
+        "compania": "Team Cherry",
+        "portada": "imagenes/portadas/95deb360c3094fa1d3b71368ccb2efdbacf7069c75a9f78d970a9ffe96cdd3c9.png",
+        "fecha_publicacion": "2024-10-07"
+    },
+    {
+        "id": "2e82c0ac-0e74-4ec4-a0cc-64c14ad6fc73",
+        "nombre": "Hallow Knight  Silksong",
+        "precio": 19.99,
+        "cantidad": 60,
+        "compania": "Team Cherry",
+        "portada": "imagenes/portadas/d6996d5d65a476cb88c57148dec09b84c543fbf4fd00a086e915f6fd59c4f96f.png",
+        "fecha_publicacion": "2025-09-04"
+    }
+]

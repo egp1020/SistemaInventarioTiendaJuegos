@@ -1,3 +1,4 @@
+import json
 from datetime import date
 from pathlib import Path
 
@@ -5,6 +6,8 @@ import streamlit as st
 
 from src import repositorio, servicio
 from src.servicio_imagenes import servicio_imagenes
+
+ruta_base = Path(__file__).resolve().parent
 
 servicio_img = servicio_imagenes()
 
@@ -54,6 +57,8 @@ with st.form("formulario_juego", clear_on_submit=False):
         type=["png", "jpg", "jpeg"],
         key=f"portada_{st.session_state['portada_key']}",
     )
+    if portada is not None:
+        st.image(portada, width=150, caption="Vista previa de portada")
 
     submit = st.form_submit_button("💾 Guardar")
 
@@ -103,6 +108,41 @@ if submit:
         st.error(f"⚠️ Error inesperado: {e}")
 
 
+st.markdown("### ⚙️ Utilidades del Inventario")
+
+col_u1, col_u2 = st.columns(2)
+
+# Descargar inventario JSON
+with col_u1:
+    if st.button("⬇️ Descargar inventario JSON"):
+        resultado = servicio.descargar_inventario_como_json()
+        if resultado["ok"]:
+            datos = resultado["datos"]
+            nombre = resultado["nombre_archivo"]
+            st.download_button(
+                label="📥 Descargar archivo",
+                data=json.dumps(datos, indent=4, ensure_ascii=False),
+                file_name=nombre,
+                mime="application/json",
+            )
+        else:
+            st.error(resultado["error"])
+
+# 🔹 Descargar tabla de índices
+with col_u2:
+    if st.button("📋 Descargar tabla de índices"):
+        resultado = servicio.descargar_tabla_indices_como_json()
+        if resultado["ok"]:
+            st.download_button(
+                label="📥 Descargar índices",
+                data=json.dumps(resultado["datos"], indent=4, ensure_ascii=False),
+                file_name="tabla_indices.json",
+                mime="application/json",
+            )
+        else:
+            st.error(resultado["error"])
+
+
 # Mostrar juegos registrados
 st.subheader("📋 Videojuegos Disponibles")
 
@@ -140,7 +180,8 @@ elif busqueda_compania:
 
 if juegos:
     # Encabezados de la tabla
-    cols = st.columns([1, 1, 2, 1, 1, 2, 2])  # Ajusta proporciones a tu gusto
+    # Ajusta proporciones a tu gusto
+    cols = st.columns([1, 1, 2, 1, 1, 2, 2, 1])
     headers = ["ID", "Portada", "Nombre", "Precio", "Stock", "Compañía", "Fecha"]
 
     for col, header in zip(cols, headers):
@@ -148,11 +189,13 @@ if juegos:
 
     # Filas de la tabla
     for j in juegos:
-        cols = st.columns([1, 1, 2, 1, 1, 2, 2])
+        cols = st.columns(
+            [1, 1, 2, 1, 1, 2, 2, 1]
+        )  # 🟩 agregamos una columna más (botón eliminar)
 
         # Portada
         with cols[1]:
-            ruta_base = Path(__file__).parent.parent
+            ruta_base = Path(__file__).resolve().parent
             ruta_imagen = ruta_base / j.get("portada", "")
             if ruta_imagen.exists():
                 st.image(str(ruta_imagen), width=60)
@@ -166,5 +209,94 @@ if juegos:
         cols[4].write(j["cantidad"])
         cols[5].write(j["compania"])
         cols[6].write(j["fecha_publicacion"])
+
+        # 🟩 Nuevo: botón eliminar
+        with cols[7]:
+            # El botón de la papelera solo establece la ID a confirmar
+            if st.button("🗑️", key=f"del_{j['id']}"):
+                st.session_state["confirmar_eliminacion"] = j["id"]
+                # No se necesita rerun aquí, ya que el estado se actualiza.
 else:
     st.info("No hay videojuegos registrados todavía.")
+
+# ----------------------------------------------------------------------
+# 2. Lógica y UI del Cuadro de Confirmación (Fuera del bucle)
+# ----------------------------------------------------------------------
+
+if "confirmar_eliminacion" in st.session_state:
+    juego_id = st.session_state["confirmar_eliminacion"]
+    juego = next((x for x in juegos if x["id"] == juego_id), None)
+
+    if juego:
+        st.warning(
+            "⚠️ ¿Seguro que deseas eliminar " f"'{juego['nombre']}' permanentemente?"
+        )
+
+        col_c1, col_c2 = st.columns(2)
+
+        # Bandera para saber si se ha realizado una acción (eliminar o
+        # cancelar)
+        accion_realizada = False
+        mensaje_accion = None
+
+        with col_c1:
+            if st.button("✅ Sí, eliminar", key=f"confirmar_{juego_id}"):
+                resultado = servicio.eliminar_juego(juego_id)
+                if resultado["ok"]:
+                    mensaje_accion = ("success", resultado["mensaje"])
+                else:
+                    mensaje_accion = ("error", resultado["error"])
+                accion_realizada = True
+
+        with col_c2:
+            if st.button("❌ Cancelar", key=f"cancelar_{juego_id}"):
+                mensaje_accion = ("info", "Eliminación cancelada.")
+                accion_realizada = True
+
+        # Manejar el resultado de la acción después de que los botones hayan
+        # sido procesados
+        if accion_realizada:
+            # Mostrar el mensaje
+            tipo, mensaje = mensaje_accion
+            if tipo == "success":
+                st.success(mensaje)
+            elif tipo == "error":
+                st.error(mensaje)
+            elif tipo == "info":
+                st.info(mensaje)
+
+            # Limpiar el estado y forzar el re-renderizado SÓLO después de la
+            # acción
+            del st.session_state["confirmar_eliminacion"]
+            st.rerun()
+
+
+st.markdown("---")  # separador visual
+st.subheader("📊 Estadísticas del sistema")
+
+# --- Estadísticas de la tabla hash ---
+estadisticas_hash = servicio.obtener_estadisticas_indice()
+if estadisticas_hash["ok"]:
+    stats = estadisticas_hash["estadisticas"]
+    st.markdown("### 🧩 Estadísticas de la tabla hash")
+    st.write("- **Tamaño de la tabla: " f"{stats.get('tamano', 'N/A')}")
+    st.write("- **Elementos almacenados: " f"{stats.get('total_elementos', 'N/A')}")
+    st.write("- **Colisiones: " f"{stats.get('colisiones', 'N/A')}")
+    st.write("- **Factor de carga: " f"{stats.get('factor_carga', 'N/A')}")
+    st.write("- **Longitud máxima de lista: " f"{stats.get('longitud_maxima', 'N/A')}")
+    st.write(
+        f"- **Longitud promedio de lista:** " f"{stats.get('longitud_promedio', 'N/A')}"
+    )
+    st.write("- **Posiciones ocupadas: " f"{stats.get('posiciones_ocupadas', 'N/A')}")
+else:
+    st.error(estadisticas_hash["error"])
+
+# --- Estado general del inventario ---
+estado = servicio.obtener_estado_inventario()
+if estado["ok"]:
+    st.markdown("### 💾 Estado del inventario")
+    st.write(f"- **Total de juegos:** {estado['total_juegos']}")
+    st.write(f"- **Ruta del archivo:** `{estado['ruta_archivo']}`")
+    st.write(f"- **Última actualización:** {estado['ultima_actualizacion']}")
+else:
+    st.error(estado["error"])
