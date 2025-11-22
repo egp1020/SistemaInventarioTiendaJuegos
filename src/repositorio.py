@@ -4,7 +4,7 @@ import shutil
 from datetime import datetime
 from typing import Any, Dict
 
-from .config import RUTA_INVENTARIO, BASE_DIR
+from .config import BASE_DIR, RUTA_INVENTARIO
 from .tabla_hash import TablaHash
 
 ruta_archivo = RUTA_INVENTARIO

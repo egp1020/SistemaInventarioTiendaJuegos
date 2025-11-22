@@ -1,8 +1,9 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from . import repositorio
-
 from .modelos import Videojuego
+from .modulo_ordenamiento import ordenar_juegos
+from .servicio_consultas import servicio_consultas
 from .servicio_imagenes import servicio_imagenes
 
 servicio_img = servicio_imagenes()
@@ -31,6 +32,10 @@ def agregar_videojuego(nombre, precio, cantidad, compania, portada, fecha_public
             "error": str(e),  # mensaje de error del modelo (ej: fecha inválida
         }
     repositorio.agregar_juego(juego.to_dict())
+
+    # Invalidar índices BST para que se reconstruyan en la próxima búsqueda
+    servicio_consultas.invalidar_indices()
+
     return {
         "ok": True,
         "id": juego.id,
@@ -100,6 +105,9 @@ def eliminar_juego(id):
         return {"ok": False, "error": "El ID es obligatorio"}
 
     if repositorio.eliminar_juego_por_id(id):
+        # Invalidar índices BST para que se reconstruyan en la próxima búsqueda
+        servicio_consultas.invalidar_indices()
+
         return {
             "ok": True,
             "mensaje": f"Videojuego con ID {id} eliminado correctamente",
@@ -216,3 +224,99 @@ def obtener_tabla_hash_visual() -> Dict[str, Any]:
         }
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+
+# ============================================================================
+# Funciones para Consultas con Árboles BST
+# ============================================================================
+
+
+def consultar_por_fecha(fecha: str) -> Dict[str, Any]:
+    """
+    Busca videojuegos por fecha exacta usando árbol BST.
+
+    Args:
+        fecha: Fecha en formato YYYY-MM-DD
+
+    Returns:
+        Diccionario con ok, resultado (lista de juegos), y error/mensaje
+    """
+    try:
+        return servicio_consultas.buscar_por_fecha(fecha)
+    except Exception as e:
+        return {"ok": False, "error": f"Error en consulta por fecha: {str(e)}"}
+
+
+def consultar_por_rango_fechas(fecha_inicio: str, fecha_fin: str) -> Dict[str, Any]:
+    """
+    Busca videojuegos en un rango de fechas usando árbol BST.
+
+    Args:
+        fecha_inicio: Fecha inicial en formato YYYY-MM-DD
+        fecha_fin: Fecha final en formato YYYY-MM-DD
+
+    Returns:
+        Diccionario con ok, resultado (lista de juegos), y error/mensaje
+    """
+    try:
+        return servicio_consultas.buscar_por_rango_fechas(fecha_inicio, fecha_fin)
+    except Exception as e:
+        return {"ok": False, "error": f"Error en consulta por rango: {str(e)}"}
+
+
+def consultar_por_compania_bst(compania: str) -> Dict[str, Any]:
+    """
+    Busca videojuegos por compañía usando árbol BST.
+
+    Args:
+        compania: Nombre de la compañía
+
+    Returns:
+        Diccionario con ok, resultado (lista de juegos), y error/mensaje
+    """
+    try:
+        return servicio_consultas.buscar_por_compania_arbol(compania)
+    except Exception as e:
+        return {"ok": False, "error": f"Error en consulta por compañía: {str(e)}"}
+
+
+def obtener_estadisticas_arboles() -> Dict[str, Any]:
+    """
+    Obtiene estadísticas de los árboles BST.
+
+    Returns:
+        Diccionario con estadísticas de los índices BST
+    """
+    try:
+        return servicio_consultas.obtener_estadisticas_arboles()
+    except Exception as e:
+        return {"ok": False, "error": f"Error al obtener estadísticas: {str(e)}"}
+
+
+# ============================================================================
+# Funciones para Ordenamiento
+# ============================================================================
+
+
+def ordenar_resultados(
+    juegos: List[Dict[str, Any]], criterio: str = "nombre", orden: str = "ascendente"
+) -> Dict[str, Any]:
+    """
+    Ordena una lista de videojuegos según el criterio especificado.
+
+    Args:
+        juegos: Lista de videojuegos
+        criterio: Campo por el cual ordenar (nombre, precio, fecha, compania, cantidad)
+        orden: Dirección del ordenamiento (ascendente, descendente)
+
+    Returns:
+        Diccionario con ok, resultado (lista ordenada), y error si aplica
+    """
+    try:
+        return ordenar_juegos(juegos, criterio, orden)
+    except Exception as e:
+        return {
+            "ok": False,
+            "error": f"Error al ordenar: {str(e)}",
+            "resultado": juegos,
+        }

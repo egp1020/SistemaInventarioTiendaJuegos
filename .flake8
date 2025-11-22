@@ -1,6 +1,8 @@
 [flake8]
 # Matches black's default line length
 max-line-length = 88
+extend-ignore = E203, E501
+exclude = .git,__pycache__,venv
 
 # Ignore specific files for line length (E501)
 per-file-ignores =

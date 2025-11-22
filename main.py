@@ -143,24 +143,53 @@ with col_u2:
             st.error(resultado["error"])
 
 
+st.markdown("---")
 # Mostrar juegos registrados
 st.subheader("📋 Videojuegos Disponibles")
 
-col1, col2, col3 = st.columns(3)
+# Fila 1: Búsquedas básicas (ID, Nombre)
+col1, col2 = st.columns(2)
 with col1:
     busqueda_id = st.text_input("🔎 Buscar por ID:")
 with col2:
     busqueda_nombre = st.text_input("🔎 Buscar por Nombre:")
-with col3:
-    busqueda_compania = st.text_input("🔎 Buscar por Compañía:")
+
+# Fila 2: Búsqueda BST
+busqueda_compania = st.text_input(
+    "🔎 Buscar por Compañía:", placeholder="Ej: Team Cherry, Activision, etc."
+)
+
+# Fila 3: Búsqueda por Fecha
+st.markdown("**🔍 Búsqueda por Fecha:**")
+col_fecha1, col_fecha2 = st.columns(2)
+
+with col_fecha1:
+    tipo_busqueda_fecha = st.radio(
+        "Tipo de búsqueda por fecha:",
+        ["Sin filtro de fecha", "Fecha exacta", "Rango de fechas"],
+        horizontal=True,
+        index=0,
+    )
+
+with col_fecha2:
+    if tipo_busqueda_fecha == "Fecha exacta":
+        fecha_busqueda = st.date_input("Fecha:", value=None, format="YYYY-MM-DD")
+    elif tipo_busqueda_fecha == "Rango de fechas":
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            fecha_inicio = st.date_input("Desde:", value=None, format="YYYY-MM-DD")
+        with col_f2:
+            fecha_fin = st.date_input("Hasta:", value=None, format="YYYY-MM-DD")
 
 juegos = repositorio.listar_juegos()
+mensaje_busqueda = None
 
 # Filtrar por ID
 if busqueda_id:
     resultado = servicio.buscar_por_Id(busqueda_id)
     if resultado["ok"]:
         juegos = [resultado["resultado"]]
+        mensaje_busqueda = ("success", f"✓ Se encontró 1 juego con ID '{busqueda_id}'")
     else:
         st.error(f"❌ {resultado['error']}")
         juegos = []
@@ -169,14 +198,131 @@ elif busqueda_nombre:
     resultado = servicio.buscar_por_nombre(busqueda_nombre)
     if resultado["ok"]:
         juegos = [resultado["resultado"]]
+        mensaje_busqueda = (
+            "success",
+            f"✓ Se encontró 1 juego con nombre '{busqueda_nombre}'",
+        )
     else:
         st.error(f"❌ {resultado['error']}")
         juegos = []
 # Filtrar por Compañía
-elif busqueda_compania:
-    juegos = [j for j in juegos if busqueda_compania.lower() in j["compania"].lower()]
-    if not juegos:
-        st.info("No se encontraron videojuegos para esa compañía.")
+elif busqueda_compania and busqueda_compania.strip():
+    resultado = servicio.consultar_por_compania_bst(busqueda_compania)
+    if resultado["ok"]:
+        juegos = resultado.get("resultado", [])
+        if juegos:
+            mensaje_busqueda = (
+                "success",
+                resultado.get("mensaje", f"✓ {len(juegos)} juego(s) encontrado(s)"),
+            )
+        else:
+            mensaje_busqueda = (
+                "info",
+                resultado.get("mensaje", "No se encontraron resultados"),
+            )
+    else:
+        st.error(f"❌ {resultado.get('error', 'Error en búsqueda')}")
+        juegos = []
+# Filtrar por Fecha
+elif (
+    tipo_busqueda_fecha == "Fecha exacta"
+    and "fecha_busqueda" in locals()
+    and fecha_busqueda
+):
+    fecha_str = fecha_busqueda.strftime("%Y-%m-%d")
+    resultado = servicio.consultar_por_fecha(fecha_str)
+    if resultado["ok"]:
+        juegos = resultado.get("resultado", [])
+        if juegos:
+            mensaje_busqueda = (
+                "success",
+                resultado.get("mensaje", f"✓ {len(juegos)} juego(s) encontrado(s)"),
+            )
+        else:
+            mensaje_busqueda = (
+                "info",
+                resultado.get("mensaje", "No se encontraron resultados"),
+            )
+    else:
+        st.error(f"❌ {resultado.get('error', 'Error en búsqueda')}")
+        juegos = []
+elif (
+    tipo_busqueda_fecha == "Rango de fechas"
+    and "fecha_inicio" in locals()
+    and "fecha_fin" in locals()
+    and fecha_inicio
+    and fecha_fin
+):
+    fecha_inicio_str = fecha_inicio.strftime("%Y-%m-%d")
+    fecha_fin_str = fecha_fin.strftime("%Y-%m-%d")
+    resultado = servicio.consultar_por_rango_fechas(fecha_inicio_str, fecha_fin_str)
+    if resultado["ok"]:
+        juegos = resultado.get("resultado", [])
+        if juegos:
+            mensaje_busqueda = (
+                "success",
+                resultado.get("mensaje", f"✓ {len(juegos)} juego(s) encontrado(s)"),
+            )
+        else:
+            mensaje_busqueda = (
+                "info",
+                resultado.get("mensaje", "No se encontraron resultados"),
+            )
+    else:
+        st.error(f"❌ {resultado.get('error', 'Error en búsqueda')}")
+        juegos = []
+
+# Mostrar mensaje de búsqueda si existe
+if mensaje_busqueda:
+    tipo_msg, texto_msg = mensaje_busqueda
+    if tipo_msg == "success":
+        st.success(texto_msg)
+    elif tipo_msg == "info":
+        st.info(texto_msg)
+
+
+# Controles de ordenamiento
+st.markdown("**🔧 Ordenar resultados:**")
+col_ord1, col_ord2 = st.columns([2, 1])
+
+with col_ord1:
+    criterio_orden = st.selectbox(
+        "Ordenar por:",
+        ["Sin ordenar", "Nombre", "Precio", "Fecha", "Compañía", "Cantidad"],
+        index=0,
+    )
+
+with col_ord2:
+    direccion_orden = st.radio(
+        "Orden:",
+        ["Ascendente ↑", "Descendente ↓"],
+        horizontal=True,
+        disabled=(criterio_orden == "Sin ordenar"),
+    )
+
+# Aplicar ordenamiento si se seleccionó un criterio
+if juegos and criterio_orden != "Sin ordenar":
+    # Mapear nombres de UI a criterios del módulo
+    mapa_criterios = {
+        "Nombre": "nombre",
+        "Precio": "precio",
+        "Fecha": "fecha",
+        "Compañía": "compania",
+        "Cantidad": "cantidad",
+    }
+
+    orden = "ascendente" if "Ascendente" in direccion_orden else "descendente"
+    criterio = mapa_criterios.get(criterio_orden, "nombre")
+
+    resultado_orden = servicio.ordenar_resultados(juegos, criterio, orden)
+
+    if resultado_orden["ok"]:
+        juegos = resultado_orden["resultado"]
+        st.info(f"✓ {resultado_orden.get('mensaje', 'Ordenado')}")
+    else:
+        st.warning(
+            f"No se pudo ordenar: {resultado_orden.get('error', 'Error desconocido')}"
+        )
 
 if juegos:
     # Encabezados de la tabla
@@ -290,6 +436,35 @@ if estadisticas_hash["ok"]:
     st.write("- **Posiciones ocupadas: " f"{stats.get('posiciones_ocupadas', 'N/A')}")
 else:
     st.error(estadisticas_hash["error"])
+
+# --- Estadísticas de los árboles BST ---
+estadisticas_bst = servicio.obtener_estadisticas_arboles()
+if estadisticas_bst["ok"]:
+    stats_bst = estadisticas_bst["estadisticas"]
+    st.markdown("### 🌳 Estadísticas de los Árboles BST")
+
+    col_arbol1, col_arbol2 = st.columns(2)
+
+    with col_arbol1:
+        st.markdown("**Árbol de Fechas:**")
+        if stats_bst.get("arbol_fechas"):
+            af = stats_bst["arbol_fechas"]
+            st.write(f"- **Nodos:** {af.get('nodos', 'N/A')}")
+            st.write(f"- **Fechas únicas:** {af.get('fechas_unicas', 'N/A')}")
+            st.write(f"- **Total de valores:** {af.get('valores_totales', 'N/A')}")
+
+    with col_arbol2:
+        st.markdown("**Árbol de Compañías:**")
+        if stats_bst.get("arbol_companias"):
+            ac = stats_bst["arbol_companias"]
+            st.write(f"- **Nodos:** {ac.get('nodos', 'N/A')}")
+            st.write(f"- **Compañías únicas:** {ac.get('companias_unicas', 'N/A')}")
+            st.write(f"- **Total de valores:** {ac.get('valores_totales', 'N/A')}")
+else:
+    if "índices no han sido construidos" not in estadisticas_bst.get("error", ""):
+        st.warning(
+            f"ℹ️ {estadisticas_bst.get('error','No se pudieron obtener estadísticas de árboles')}"
+        )
 
 # --- Estado general del inventario ---
 estado = servicio.obtener_estado_inventario()
