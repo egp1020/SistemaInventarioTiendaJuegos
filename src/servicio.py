@@ -32,6 +32,10 @@ def agregar_videojuego(nombre, precio, cantidad, compania, portada, fecha_public
             "error": str(e),  # mensaje de error del modelo (ej: fecha inválida
         }
     repositorio.agregar_juego(juego.to_dict())
+
+    # Invalidar índices BST para que se reconstruyan en la próxima búsqueda
+    servicio_consultas.invalidar_indices()
+
     return {
         "ok": True,
         "id": juego.id,
@@ -101,6 +105,9 @@ def eliminar_juego(id):
         return {"ok": False, "error": "El ID es obligatorio"}
 
     if repositorio.eliminar_juego_por_id(id):
+        # Invalidar índices BST para que se reconstruyan en la próxima búsqueda
+        servicio_consultas.invalidar_indices()
+
         return {
             "ok": True,
             "mensaje": f"Videojuego con ID {id} eliminado correctamente",

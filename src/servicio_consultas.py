@@ -75,6 +75,13 @@ class ServicioConsultas:
                 return resultado
         return {"ok": True}
 
+    def invalidar_indices(self):
+        """
+        Invalida los índices BST para forzar su reconstrucción
+        en la próxima consulta. Se debe llamar cuando el inventario cambia.
+        """
+        self._indices_construidos = False
+
     def buscar_por_fecha(self, fecha: str) -> Dict[str, Any]:
         """
         Busca videojuegos por fecha exacta de publicación.
